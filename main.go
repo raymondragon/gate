@@ -11,10 +11,10 @@ import (
     "sync"
 )
 var (
-    addr = flag.String("a", ":1", "addr")
+    addr = flag.String("a", ":8080", "addr")
     ibnd = flag.String("i", "", "inbound")
-    obnd = flag.String("o", ":10", "outbound")
-    path = flag.String("p", "/1", "path")
+    obnd = flag.String("o", ":1", "outbound")
+    path = flag.String("p", "/auth", "path")
     mute = sync.Mutex{}
 )
 func main() {
@@ -77,7 +77,7 @@ func ListenAndCopy() {
     for {
         clientConn, err := listener.Accept()
         if err != nil {
-            log.Println("[ERR-22] ", err)
+            log.Println("[WAR-22] ", err)
             continue
         }
         go handleClient(clientConn)
@@ -87,12 +87,12 @@ func handleClient(clientConn net.Conn) {
     defer clientConn.Close()
     clientIP := clientConn.RemoteAddr().(*net.TCPAddr).IP.String()
     if !inIPlist(clientIP, *ipst) {
-        log.Println("[ERR-23] ", clientIP)
+        log.Println("[WAR-23] ", clientIP)
         return
     }
     serverConn, err := net.Dial("tcp", *tars)
     if err != nil {
-        log.Println("[ERR-24] ", err)
+        log.Println("[WAR-24] ", err)
         return
     }
     defer serverConn.Close()
@@ -102,7 +102,7 @@ func handleClient(clientConn net.Conn) {
 func inIPlist(ip string, iplist string) bool {
     file, err := os.Open(iplist)
     if err != nil {
-        log.Println("[ERR-25] ", err)
+        log.Println("[WAR-25] ", err)
         return false
     }
     defer file.Close()
@@ -113,7 +113,7 @@ func inIPlist(ip string, iplist string) bool {
         }
     }
     if err := scanner.Err(); err != nil {
-        log.Println("[ERR-26] ", err)
+        log.Println("[WAR-26] ", err)
     }
     return false
 }

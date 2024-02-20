@@ -13,9 +13,9 @@ import (
 var (
 
     addr = flag.String("a", ":1", "addr")
-    ibnd = flag.String("i", ":1001", "i")
-    obnd = flag.String("o", ":1000", "o")
-    path = flag.String("p", "./", "path")
+    ibnd = flag.String("i", "", "inbound")
+    obnd = flag.String("o", ":10", "outbound")
+    path = flag.String("p", "/1", "path")
     mute = sync.Mutex{}
 
     //bind = flag.String("b", ":10000", "bind")
@@ -24,18 +24,65 @@ var (
 )
 func main() {
     flag.Parse()
-    if *tars == "" {
-        log.Fatal("[ERR-0] Target Server Info Required")
+    _, portAddr, err := net.SplitHostPort(*addr)
+    if err != nil {
+        log.Fatal("[ERR-00] ", err)
     }
+    _, portObnd, err := net.SplitHostPort(*obnd)
+    if err != nil {
+        log.Fatal("[ERR-01] ", err)
+    }
+    if portAddr == portObnd {
+        log.Fatal("[ERR-10]")
+    } else {
+        log.Printf("[LISTEN] %v%v\n", *addr, *path)
+        ListenAndAuth()
+    }
+    if *ibnd == "" {
+        log.Println("[ERR-20]")
+    } else {
+        log.Printf("[INBOUND] %v [OUTBOUND] %v\n", *ibnd, *obnd)
+        ListenAndCopy()
+    }
+}
+func ListenAndAuth() {
+    file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatal("[ERR-11] ", err)
+    }
+    defer file.Close()
+    http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
+        ip, _, err := net.SplitHostPort(r.RemoteAddr)
+        if err != nil {
+            log.Println("[ERR-12] ", err)
+            http.Error(w, "[ERR-12]", http.StatusInternalServerError)
+            return
+        }
+        if _, err := w.Write([]byte(ip+"\n")); err != nil {
+            log.Println("[ERR-13] ", err)
+            http.Error(w, "[ERR-13]", http.StatusInternalServerError)
+            return
+        }
+        mute.Lock()
+        defer mute.Unlock()
+        if _, err := file.WriteString(ip+"\n"); err != nil {
+            log.Println("[ERR-14] ", err)
+            http.Error(w, "[ERR-14]", http.StatusInternalServerError)
+            return
+        }
+    })
+    log.Fatal(http.ListenAndServe(*addr, nil))
+}
+func ListenAndCopy() {
     listener, err := net.Listen("tcp", *bind)
     if err != nil {
-        log.Fatal("[ERR-1] ", err)
+        log.Fatal("[ERR-21] ", err)
     }
     defer listener.Close()
     for {
         clientConn, err := listener.Accept()
         if err != nil {
-            log.Println("[ERR-2] ", err)
+            log.Println("[ERR-22] ", err)
             continue
         }
         go handleClient(clientConn)
@@ -45,12 +92,12 @@ func handleClient(clientConn net.Conn) {
     defer clientConn.Close()
     clientIP := clientConn.RemoteAddr().(*net.TCPAddr).IP.String()
     if !inIPlist(clientIP, *ipst) {
-        log.Println("[ERR-3] ", clientIP)
+        log.Println("[ERR-23] ", clientIP)
         return
     }
     serverConn, err := net.Dial("tcp", *tars)
     if err != nil {
-        log.Println("[ERR-4] ", err)
+        log.Println("[ERR-24] ", err)
         return
     }
     defer serverConn.Close()
@@ -60,7 +107,7 @@ func handleClient(clientConn net.Conn) {
 func inIPlist(ip string, iplist string) bool {
     file, err := os.Open(iplist)
     if err != nil {
-        log.Println("[ERR-5] ", err)
+        log.Println("[ERR-25] ", err)
         return false
     }
     defer file.Close()
@@ -71,46 +118,7 @@ func inIPlist(ip string, iplist string) bool {
         }
     }
     if err := scanner.Err(); err != nil {
-        log.Println("[ERR-6] ", err)
+        log.Println("[ERR-26] ", err)
     }
     return false
-}
-
-
-
-package main
-import (
-
-)
-var (
-
-)
-func main() {
-    flag.Parse()
-    file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        log.Fatal("[ERR-0] ", err)
-    }
-    defer file.Close()
-    http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
-        ip, _, err := net.SplitHostPort(r.RemoteAddr)
-        if err != nil {
-            log.Println("[ERR-1] ", err)
-            http.Error(w, "[ERR-1]", http.StatusInternalServerError)
-            return
-        }
-        if _, err := w.Write([]byte(ip+"\n")); err != nil {
-            log.Println("[ERR-2] ", err)
-            http.Error(w, "[ERR-2]", http.StatusInternalServerError)
-            return
-        }
-        mute.Lock()
-        defer mute.Unlock()
-        if _, err := file.WriteString(ip+"\n"); err != nil {
-            log.Println("[ERR-3] ", err)
-            http.Error(w, "[ERR-3]", http.StatusInternalServerError)
-            return
-        }
-    })
-    log.Fatal(http.ListenAndServe(*addr, nil))
 }

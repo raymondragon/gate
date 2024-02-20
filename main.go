@@ -95,7 +95,7 @@ func handleOut(outConn net.Conn) {
         log.Println("[WAR-24] ", err)
         return
     }
-    defer serverConn.Close()
+    defer inConn.Close()
     go io.CopyBuffer(inConn, outConn, nil)
     io.CopyBuffer(outConn, inConn, nil)
 }

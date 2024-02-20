@@ -11,16 +11,11 @@ import (
     "sync"
 )
 var (
-
     addr = flag.String("a", ":1", "addr")
     ibnd = flag.String("i", "", "inbound")
     obnd = flag.String("o", ":10", "outbound")
     path = flag.String("p", "/1", "path")
     mute = sync.Mutex{}
-
-    //bind = flag.String("b", ":10000", "bind")
-    //ipst = flag.String("i", "IPlist", "iplist")
-    //tars = flag.String("t", "", "target")
 )
 func main() {
     flag.Parse()
@@ -39,7 +34,7 @@ func main() {
         ListenAndAuth()
     }
     if *ibnd == "" {
-        log.Println("[ERR-20]")
+        log.Println("[WAR-20]")
     } else {
         log.Printf("[INBOUND] %v [OUTBOUND] %v\n", *ibnd, *obnd)
         ListenAndCopy()

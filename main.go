@@ -1,6 +1,7 @@
 package main
 import (
     "bufio"
+    "crypto/tls"
     "flag"
     "io"
     "log"
@@ -94,7 +95,14 @@ func handleOut(outConn net.Conn) {
     inConn, err := net.Dial("tcp", *ibnd)
     if err != nil {
         log.Println("[WAR-24]")
-        return
+        tlsConfig := &tls.Config{
+            InsecureSkipVerify: true,
+        }
+        inConn, err = tls.Dial("tcp", *ibnd, tlsConfig)
+        if err != nil {
+            log.Println("[WAR-25]")
+            return
+        }
     }
     defer inConn.Close()
     go io.CopyBuffer(inConn, outConn, nil)
@@ -103,7 +111,7 @@ func handleOut(outConn net.Conn) {
 func inIPlist(ip string, iplist string) bool {
     file, err := os.Open(iplist)
     if err != nil {
-        log.Println("[WAR-25]")
+        log.Println("[WAR-26]")
         return false
     }
     defer file.Close()
@@ -114,7 +122,7 @@ func inIPlist(ip string, iplist string) bool {
         }
     }
     if err := scanner.Err(); err != nil {
-        log.Println("[WAR-26]")
+        log.Println("[WAR-27]")
     }
     return false
 }

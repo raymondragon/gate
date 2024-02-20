@@ -69,35 +69,35 @@ func ListenAndAuth() {
     log.Fatal(http.ListenAndServe(*addr, nil))
 }
 func ListenAndCopy() {
-    listener, err := net.Listen("tcp", *bind)
+    listener, err := net.Listen("tcp", *obnd)
     if err != nil {
         log.Fatal("[ERR-21] ", err)
     }
     defer listener.Close()
     for {
-        clientConn, err := listener.Accept()
+        outConn, err := listener.Accept()
         if err != nil {
             log.Println("[WAR-22] ", err)
             continue
         }
-        go handleClient(clientConn)
+        go handleOut(outConn)
     }
 }
-func handleClient(clientConn net.Conn) {
-    defer clientConn.Close()
-    clientIP := clientConn.RemoteAddr().(*net.TCPAddr).IP.String()
-    if !inIPlist(clientIP, *ipst) {
+func handleOut(outConn net.Conn) {
+    defer outConn.Close()
+    clientIP := outConn.RemoteAddr().(*net.TCPAddr).IP.String()
+    if !inIPlist(clientIP, "IPlist") {
         log.Println("[WAR-23] ", clientIP)
         return
     }
-    serverConn, err := net.Dial("tcp", *tars)
+    inConn, err := net.Dial("tcp", *ibnd)
     if err != nil {
         log.Println("[WAR-24] ", err)
         return
     }
     defer serverConn.Close()
-    go io.CopyBuffer(serverConn, clientConn, nil)
-    io.CopyBuffer(clientConn, serverConn, nil)
+    go io.CopyBuffer(inConn, outConn, nil)
+    io.CopyBuffer(outConn, inConn, nil)
 }
 func inIPlist(ip string, iplist string) bool {
     file, err := os.Open(iplist)

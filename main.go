@@ -13,8 +13,8 @@ import (
 var (
     addr = flag.String("a", ":90", "addr")
     ibnd = flag.String("i", "", "inbound")
-    obnd = flag.String("o", ":1", "outbound")
-    path = flag.String("p", "/2list", "path")
+    obnd = flag.String("o", ":10", "outbound")
+    path = flag.String("p", "/iplist", "path")
     mute = sync.Mutex{}
 )
 func main() {

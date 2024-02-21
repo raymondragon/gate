@@ -78,14 +78,15 @@ func ListenAndAuth() {
     }
 }
 func ListenAndCopy() {
+    var listener net.Listener
     if _, err := tls.LoadX509KeyPair(*crtf, *keyf); err!=nil {
         log.Println("[WAR-20]", err)
-        listener, err := net.Listen("tcp", *obnd)
+        listener, err = net.Listen("tcp", *obnd)
         if err != nil {
             log.Println("[WAR-21]", err)
         } else {
             cert, _ := tls.LoadX509KeyPair(*crtf, *keyf)
-            listener, err := tls.Listen("tcp", *obnd, &tls.Config{
+            listener, err = tls.Listen("tcp", *obnd, &tls.Config{
                 Certificates: []tls.Certificate{cert},
             })
             if err != nil {

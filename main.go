@@ -165,7 +165,7 @@ func handleOut(outConn net.Conn) {
         }
     }
     defer inConn.Close()
-    io.Copy(inConn, outConn)
+    go io.Copy(inConn, outConn)
     io.Copy(outConn, inConn)
 }
 func inIPlist(ip string, iplist string) bool {

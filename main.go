@@ -12,8 +12,10 @@ import (
     "sync"
 )
 var (
-    addr = flag.String("a", ":80", "addr")
+    addr = flag.String("a", ":90", "addr")
+    crtf = flag.String("c", "crt.pem", "")
     ibnd = flag.String("i", "", "inbound")
+    keyf = flag.String("k", "key.pem", "")
     obnd = flag.String("o", ":10", "outbound")
     path = flag.String("p", "/iplist", "path")
     mute = sync.Mutex{}
@@ -28,27 +30,32 @@ func main() {
     if err != nil {
         log.Fatal("[ERR-01]")
     }
-    if portAddr == portObnd {
-        log.Fatal("[ERR-10]")
-    } else {
+    _, err := tls.LoadX509KeyPair(*crtf, *keyf)
+    switch {
+    case portAddr != portObnd && err != nil :
+        log.Println("[WAR-20]")
         log.Printf("[LISTEN] %v%v\n", *addr, *path)
-        go ListenAndAuth()
+        go ListenAndAuthTcp()
+    case portAddr != portObnd && err == nil :
+        log.Printf("[LISTEN] %v%v\n", *addr, *path)
+        go ListenAndAuthTls()
+    default :
+        log.Println("[WAR-21]")
     }
-    _, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
     switch {
     case *ibnd != "" && err != nil :
         log.Println("[WAR-20]")
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
-        go ListenAndCopyTls()
+        go ListenAndCopyTcp()
     case *ibnd != "" && err == nil :
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
-        go ListenAndCopyTcp()
+        go ListenAndCopyTls()
     default :
         log.Println("[WAR-21]")
     }
     select {}
 }
-func ListenAndAuth() {
+func ListenAndAuthTcp() {
     file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
         log.Fatal("[ERR-11]")
@@ -76,12 +83,36 @@ func ListenAndAuth() {
     })
     log.Fatal(http.ListenAndServe(*addr, nil))
 }
-func ListenAndCopyTls() {
-    cert, _ := tls.LoadX509KeyPair("cert.pem", "key.pem")
-    tlsConfig := &tls.Config{
-        Certificates: []tls.Certificate{cert},
+func ListenAndAuthTls() {
+    file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatal("[ERR-11]")
     }
-    listener, err := tls.Listen("tcp", *obnd, tlsConfig)
+    defer file.Close()
+    http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
+        ip, _, err := net.SplitHostPort(r.RemoteAddr)
+        if err != nil {
+            log.Println("[ERR-12]")
+            http.Error(w, "[ERR-12]", 500)
+            return
+        }
+        if _, err := w.Write([]byte(ip+"\n")); err != nil {
+            log.Println("[ERR-13]")
+            http.Error(w, "[ERR-13]", 500)
+            return
+        }
+        mute.Lock()
+        defer mute.Unlock()
+        if _, err := file.WriteString(ip+"\n"); err != nil {
+            log.Println("[ERR-14]")
+            http.Error(w, "[ERR-14]", 500)
+            return
+        }
+    })
+    log.Fatal(http.ListenAndServe(*addr, nil))
+}
+func ListenAndCopyTcp() {
+    listener, err := net.Listen("tcp", *obnd)
     if err != nil {
         log.Fatal("[ERR-21]")
     }
@@ -95,8 +126,12 @@ func ListenAndCopyTls() {
         go handleOut(outConn)
     }
 }
-func ListenAndCopyTcp() {
-    listener, err := net.Listen("tcp", *obnd)
+func ListenAndCopyTls() {
+    cert, _ := tls.LoadX509KeyPair("cert.pem", "key.pem")
+    tlsConfig := &tls.Config{
+        Certificates: []tls.Certificate{cert},
+    }
+    listener, err := tls.Listen("tcp", *obnd, tlsConfig)
     if err != nil {
         log.Fatal("[ERR-21]")
     }

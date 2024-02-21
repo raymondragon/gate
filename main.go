@@ -39,15 +39,19 @@ func main() {
     case portAddr != portObnd && err == nil :
         log.Printf("[LISTEN] %v%v\n", *addr, *path)
         go ListenAndAuthTls()
-    case *ibnd != "" && err != nil :
+    default :
         log.Println("[WAR-01]")
+    }
+    switch {
+    case *ibnd != "" && err != nil :
+        log.Println("[WAR-02]")
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
         go ListenAndCopyTcp()
     case *ibnd != "" && err == nil :
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
         go ListenAndCopyTls()
     default :
-        log.Println("[WAR-02]")
+        log.Println("[WAR-03]")
     }
     select {}
 }

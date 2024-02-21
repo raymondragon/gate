@@ -109,7 +109,7 @@ func ListenAndAuthTls() {
             return
         }
     })
-    log.Fatal(http.ListenAndServe(*addr, nil))
+    log.Fatal(http.ListenAndServeTls(*addr, *crtf, *keyf, nil))
 }
 func ListenAndCopyTcp() {
     listener, err := net.Listen("tcp", *obnd)

@@ -40,14 +40,14 @@ func main() {
         log.Printf("[LISTEN] %v%v\n", *addr, *path)
         go ListenAndAuthTls()
     case *ibnd != "" && err != nil :
-        log.Println("[WAR-02]")
+        log.Println("[WAR-01]")
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
         go ListenAndCopyTcp()
     case *ibnd != "" && err == nil :
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
         go ListenAndCopyTls()
     default :
-        log.Println("[WAR-01]")
+        log.Println("[WAR-02]")
     }
     select {}
 }

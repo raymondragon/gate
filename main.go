@@ -165,8 +165,8 @@ func handleOut(outConn net.Conn) {
         }
     }
     defer inConn.Close()
-    go io.CopyBuffer(inConn, outConn, nil)
-    io.CopyBuffer(outConn, inConn, nil)
+    io.Copy(inConn, outConn)
+    io.Copy(outConn, inConn)
 }
 func inIPlist(ip string, iplist string) bool {
     file, err := os.Open(iplist)

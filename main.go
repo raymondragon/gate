@@ -30,7 +30,7 @@ func main() {
     if err != nil {
         log.Fatal("[ERR-01]")
     }
-    _, err := tls.LoadX509KeyPair(*crtf, *keyf)
+    _, err = tls.LoadX509KeyPair(*crtf, *keyf)
     switch {
     case portAddr != portObnd && err != nil :
         log.Println("[WAR-00]")

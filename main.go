@@ -39,10 +39,6 @@ func main() {
     case portAddr != portObnd && err == nil :
         log.Printf("[LISTEN] %v%v\n", *addr, *path)
         go ListenAndAuthTls()
-    default :
-        log.Println("[WAR-01]")
-    }
-    switch {
     case *ibnd != "" && err != nil :
         log.Println("[WAR-02]")
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
@@ -51,7 +47,7 @@ func main() {
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
         go ListenAndCopyTls()
     default :
-        log.Println("[WAR-03]")
+        log.Println("[WAR-01]")
     }
     select {}
 }
@@ -109,7 +105,7 @@ func ListenAndAuthTls() {
             return
         }
     })
-    log.Fatal(http.ListenAndServeTls(*addr, *crtf, *keyf, nil))
+    log.Fatal(http.ListenAndServeTLS(*addr, *crtf, *keyf, nil))
 }
 func ListenAndCopyTcp() {
     listener, err := net.Listen("tcp", *obnd)

@@ -64,20 +64,20 @@ func ListenAndAuthTcp() {
     http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
         ip, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
-            log.Println("[ERR-12]")
-            http.Error(w, "[ERR-12]", 500)
+            log.Println("[ERR-11]")
+            http.Error(w, "[ERR-11]", 500)
             return
         }
         if _, err := w.Write([]byte(ip+"\n")); err != nil {
-            log.Println("[ERR-13]")
-            http.Error(w, "[ERR-13]", 500)
+            log.Println("[ERR-12]")
+            http.Error(w, "[ERR-12]", 500)
             return
         }
         mute.Lock()
         defer mute.Unlock()
         if _, err := file.WriteString(ip+"\n"); err != nil {
-            log.Println("[ERR-14]")
-            http.Error(w, "[ERR-14]", 500)
+            log.Println("[ERR-13]")
+            http.Error(w, "[ERR-13]", 500)
             return
         }
     })
@@ -86,26 +86,26 @@ func ListenAndAuthTcp() {
 func ListenAndAuthTls() {
     file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
-        log.Fatal("[ERR-11]")
+        log.Fatal("[ERR-20]")
     }
     defer file.Close()
     http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
         ip, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
-            log.Println("[ERR-12]")
-            http.Error(w, "[ERR-12]", 500)
+            log.Println("[ERR-21]")
+            http.Error(w, "[ERR-21]", 500)
             return
         }
         if _, err := w.Write([]byte(ip+"\n")); err != nil {
-            log.Println("[ERR-13]")
-            http.Error(w, "[ERR-13]", 500)
+            log.Println("[ERR-22]")
+            http.Error(w, "[ERR-22]", 500)
             return
         }
         mute.Lock()
         defer mute.Unlock()
         if _, err := file.WriteString(ip+"\n"); err != nil {
-            log.Println("[ERR-14]")
-            http.Error(w, "[ERR-14]", 500)
+            log.Println("[ERR-23]")
+            http.Error(w, "[ERR-23]", 500)
             return
         }
     })
@@ -114,13 +114,13 @@ func ListenAndAuthTls() {
 func ListenAndCopyTcp() {
     listener, err := net.Listen("tcp", *obnd)
     if err != nil {
-        log.Fatal("[ERR-21]")
+        log.Fatal("[ERR-30]")
     }
     defer listener.Close()
     for {
         outConn, err := listener.Accept()
         if err != nil {
-            log.Println("[WAR-22]")
+            log.Println("[WAR-30]")
             continue
         }
         go handleOut(outConn)
@@ -133,13 +133,13 @@ func ListenAndCopyTls() {
     }
     listener, err := tls.Listen("tcp", *obnd, tlsConfig)
     if err != nil {
-        log.Fatal("[ERR-21]")
+        log.Fatal("[ERR-40]")
     }
     defer listener.Close()
     for {
         outConn, err := listener.Accept()
         if err != nil {
-            log.Println("[WAR-22]")
+            log.Println("[WAR-40]")
             continue
         }
         go handleOut(outConn)
@@ -149,18 +149,18 @@ func handleOut(outConn net.Conn) {
     defer outConn.Close()
     clientIP := outConn.RemoteAddr().(*net.TCPAddr).IP.String()
     if !inIPlist(clientIP, "IPlist") {
-        log.Println("[WAR-23]")
+        log.Println("[WAR-50]")
         return
     }
     inConn, err := net.Dial("tcp", *ibnd)
     if err != nil {
-        log.Println("[WAR-24]")
+        log.Println("[WAR-51]")
         tlsConfig := &tls.Config{
             InsecureSkipVerify: true,
         }
         inConn, err = tls.Dial("tcp", *ibnd, tlsConfig)
         if err != nil {
-            log.Println("[WAR-25]")
+            log.Println("[WAR-52]")
             return
         }
     }
@@ -171,7 +171,7 @@ func handleOut(outConn net.Conn) {
 func inIPlist(ip string, iplist string) bool {
     file, err := os.Open(iplist)
     if err != nil {
-        log.Println("[WAR-26]")
+        log.Println("[WAR-60]")
         return false
     }
     defer file.Close()
@@ -182,7 +182,7 @@ func inIPlist(ip string, iplist string) bool {
         }
     }
     if err := scanner.Err(); err != nil {
-        log.Println("[WAR-27]")
+        log.Println("[WAR-61]")
     }
     return false
 }

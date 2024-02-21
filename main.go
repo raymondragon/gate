@@ -83,13 +83,14 @@ func ListenAndCopy() {
         listener, err := net.Listen("tcp", *obnd)
         if err != nil {
             log.Println("[WAR-21]", err)
-    } else {
-        cert, _ := tls.LoadX509KeyPair(*crtf, *keyf)
-        listener, err := tls.Listen("tcp", *obnd, &tls.Config{
-            Certificates: []tls.Certificate{cert},
-        })
-        if err != nil {
-            log.Fatal("[ERR-20]", err)
+        } else {
+            cert, _ := tls.LoadX509KeyPair(*crtf, *keyf)
+            listener, err := tls.Listen("tcp", *obnd, &tls.Config{
+                Certificates: []tls.Certificate{cert},
+            })
+            if err != nil {
+                log.Fatal("[ERR-20]", err)
+            }
         }
     }
     defer listener.Close()

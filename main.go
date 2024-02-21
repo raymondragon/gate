@@ -127,7 +127,7 @@ func ListenAndCopyTcp() {
     }
 }
 func ListenAndCopyTls() {
-    cert, _ := tls.LoadX509KeyPair("cert.pem", "key.pem")
+    cert, _ := tls.LoadX509KeyPair(*crtf, *keyf)
     tlsConfig := &tls.Config{
         Certificates: []tls.Certificate{cert},
     }

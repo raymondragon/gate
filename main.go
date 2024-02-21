@@ -33,32 +33,32 @@ func main() {
     _, err := tls.LoadX509KeyPair(*crtf, *keyf)
     switch {
     case portAddr != portObnd && err != nil :
-        log.Println("[WAR-20]")
+        log.Println("[WAR-00]")
         log.Printf("[LISTEN] %v%v\n", *addr, *path)
         go ListenAndAuthTcp()
     case portAddr != portObnd && err == nil :
         log.Printf("[LISTEN] %v%v\n", *addr, *path)
         go ListenAndAuthTls()
     default :
-        log.Println("[WAR-21]")
+        log.Println("[WAR-01]")
     }
     switch {
     case *ibnd != "" && err != nil :
-        log.Println("[WAR-20]")
+        log.Println("[WAR-02]")
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
         go ListenAndCopyTcp()
     case *ibnd != "" && err == nil :
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)
         go ListenAndCopyTls()
     default :
-        log.Println("[WAR-21]")
+        log.Println("[WAR-03]")
     }
     select {}
 }
 func ListenAndAuthTcp() {
     file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
-        log.Fatal("[ERR-11]")
+        log.Fatal("[ERR-10]")
     }
     defer file.Close()
     http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {

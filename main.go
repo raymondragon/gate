@@ -94,11 +94,14 @@ func ListenAndCopy() {
             }
         }
     }
+    if listener == nil {
+        log.Fatal("[ERR-21]", "Nil Listener")
+    }
     defer listener.Close()
     for {
         outConn, err := listener.Accept()
         if err != nil {
-            log.Println("[WAR-21]", err)
+            log.Println("[WAR-22]", err)
             continue
         }
         go handleOut(outConn)

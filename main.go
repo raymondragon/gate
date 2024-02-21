@@ -34,7 +34,7 @@ func main() {
         log.Printf("[LISTEN] %v%v\n", *addr, *path)
         go ListenAndAuth()
     } else {
-        log.Fatal("[ERR-03]", "Port Conflict")
+        log.Fatal("[ERR-03]", "Server Port Conflict")
     }
     if *ibnd != "" {
         log.Printf("[LISTEN] %v <-> %v\n", *obnd, *ibnd)

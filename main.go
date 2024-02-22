@@ -50,24 +50,26 @@ func ListenAndAuth() {
     http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
         ip, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
-            log.Printf("[ERR-11] %v", err)
-            http.Error(w, "[ERR-11]", 500)
+            log.Printf("[WAR-10] %v", err)
+            http.Error(w, "[WAR-10]", 500)
             return
         }
         if _, err := w.Write([]byte(ip+"\n")); err != nil {
-            log.Printf("[ERR-12] %v", err)
-            http.Error(w, "[ERR-12]", 500)
+            log.Printf("[WAR-11] %v", err)
+            http.Error(w, "[WAR-11]", 500)
             return
         }
         mute.Lock()
         defer mute.Unlock()
         if _, err := file.WriteString(ip+"\n"); err != nil {
-            log.Printf("[ERR-13] %v", err)
-            http.Error(w, "[ERR-13]", 500)
+            log.Printf("[WAR-12] %v", err)
+            http.Error(w, "[WAR-12]", 500)
             return
         }
     })
-    log.Fatal(http.ListenAndServe(*addr, nil))
+    if err := http.ListenAndServe(*addr, nil); err != nil {
+        log.Fatalf("[ERR-11] %v", err)
+    }
 }
 func ListenAndCopy() {
     listener, err := net.Listen("tcp", *obnd)

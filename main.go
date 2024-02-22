@@ -40,11 +40,6 @@ func main() {
     select {}
 }
 func ListenAndAuth() {
-    file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        log.Fatalf("[ERR-10] %v", err)
-    }
-    defer file.Close()
     http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
         ip, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
@@ -57,14 +52,19 @@ func ListenAndAuth() {
             http.Error(w, "[WAR-11]", 500)
             return
         }
-        if _, err := file.WriteString(ip+"\n"); err != nil {
+        file, err := os.OpenFile("IPlist", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+        if err != nil {
             log.Printf("[WAR-12] %v", err)
-            http.Error(w, "[WAR-12]", 500)
+            return
+        }
+        defer file.Close()
+        if _, err := file.WriteString(ip+"\n"); err != nil {
+            log.Printf("[WAR-13] %v", err)
             return
         }
     })
     if err := http.ListenAndServe(*addr, nil); err != nil {
-        log.Fatalf("[ERR-11] %v", err)
+        log.Fatalf("[ERR-10] %v", err)
     }
 }
 func ListenAndCopy() {

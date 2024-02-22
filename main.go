@@ -94,13 +94,7 @@ func handleOut(outConn net.Conn) {
     inConn, err := net.Dial("tcp", *ibnd)
     if err != nil {
         log.Println("[WAR-31] ", err)
-        inConn, err = tls.Dial("tcp", *ibnd, &tls.Config{
-            InsecureSkipVerify: true,
-        })
-        if err != nil {
-            log.Println("[WAR-32] ", err)
-            return
-        }
+        return
     }
     defer inConn.Close()
     go io.Copy(inConn, outConn)

@@ -41,13 +41,13 @@ func main() {
 }
 func ListenAndAuth() {
     http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
-        IP, _, err := net.SplitHostPort(r.RemoteAddr)
+        clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
             log.Printf("[WAR-10] %v", err)
             http.Error(w, "[WAR-10]", 500)
             return
         }
-        if _, err := w.Write([]byte(IP+"\n")); err != nil {
+        if _, err := w.Write([]byte(clientIP+"\n")); err != nil {
             log.Printf("[WAR-11] %v", err)
             http.Error(w, "[WAR-11]", 500)
             return
@@ -58,11 +58,11 @@ func ListenAndAuth() {
             return
         }
         defer file.Close()
-        if inIPlist(IP, "IPlist") {
-            log.Printf("[WAR-13] %v", IP)
+        if inIPlist(clientIP, "IPlist") {
+            log.Printf("[WAR-13] %v", clientIP)
             return
         }
-        if _, err := file.WriteString(IP+"\n"); err != nil {
+        if _, err := file.WriteString(clientIP+"\n"); err != nil {
             log.Printf("[WAR-14] %v", err)
             return
         }

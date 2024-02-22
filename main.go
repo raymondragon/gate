@@ -14,7 +14,7 @@ var (
     addr = flag.String("a", ":90", "addr")
     ibnd = flag.String("i", "", "inbound")
     obnd = flag.String("o", ":10", "outbound")
-    path = flag.String("p", "/iplist", "path")
+    path = flag.String("p", "/ip", "path")
     mute = sync.Mutex{}
 )
 func main() {
@@ -73,6 +73,7 @@ func ListenAndCopy() {
     listener, err := net.Listen("tcp", *obnd)
     if err != nil {
         log.Println("[WAR-20] ", err)
+        return
     }
     defer listener.Close()
     for {

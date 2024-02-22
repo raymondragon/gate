@@ -8,14 +8,12 @@ import (
     "net/http"
     "os"
     "strings"
-    "sync"
 )
 var (
     addr = flag.String("a", ":90", "addr")
     ibnd = flag.String("i", "", "inbound")
     obnd = flag.String("o", ":10", "outbound")
     path = flag.String("p", "/ip", "path")
-    mute = sync.Mutex{}
 )
 func main() {
     flag.Parse()
@@ -59,8 +57,6 @@ func ListenAndAuth() {
             http.Error(w, "[WAR-11]", 500)
             return
         }
-        mute.Lock()
-        defer mute.Unlock()
         if _, err := file.WriteString(ip+"\n"); err != nil {
             log.Printf("[WAR-12] %v", err)
             http.Error(w, "[WAR-12]", 500)

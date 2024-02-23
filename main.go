@@ -107,7 +107,16 @@ func handleOut(outConn net.Conn) {
 func inIPlist(ip string, list string) bool {
     file, err := os.Open(list)
     if err != nil {
-        log.Printf("[WAR-40] %v", err)
+        if os.IsNotExist(err) {
+            file, err := os.Create(list)
+                if err != nil {
+                    log.Printf("[WAR-40] %v", err)
+                    return false
+                }
+            defer file.Close()
+            return false
+        }
+        log.Printf("[WAR-41] %v", err)
         return false
     }
     defer file.Close()

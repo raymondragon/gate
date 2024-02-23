@@ -108,10 +108,10 @@ func inIPlist(ip string, list string) bool {
     if err != nil {
         if os.IsNotExist(err) {
             file, err := os.Create(list)
-                if err != nil {
-                    log.Printf("[WAR-30] %v", err)
-                    return false
-                }
+            if err != nil {
+                log.Printf("[WAR-30] %v", err)
+                return false
+            }
             defer file.Close()
             return false
         }

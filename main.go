@@ -61,10 +61,11 @@ func ListenAndAuth() {
         if inIPlist(clientIP, "IPlist") {
             log.Printf("[WAR-13] %v", clientIP)
             return
-        }
-        if _, err := file.WriteString(clientIP+"\n"); err != nil {
-            log.Printf("[WAR-14] %v", err)
-            return
+        } else {
+            if _, err := file.WriteString(clientIP+"\n"); err != nil {
+                log.Printf("[WAR-14] %v", err)
+                return
+            }
         }
     })
     if err := http.ListenAndServe(*addr, nil); err != nil {

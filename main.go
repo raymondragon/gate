@@ -85,24 +85,23 @@ func ListenAndCopy() {
             log.Printf("[WAR-21] %v", err)
             continue
         }
-        go handleOut(outConn)
+        go func(outConn net.Conn) {
+            defer outConn.Close()
+            clientIP := outConn.RemoteAddr().(*net.TCPAddr).IP.String()
+            if !inIPlist(clientIP, "IPlist") {
+                log.Printf("[WAR-22] %v", clientIP)
+                return
+            }
+            inConn, err := net.Dial("tcp", *ibnd)
+            if err != nil {
+                log.Printf("[WAR-23] %v", err)
+                return
+            }
+            defer inConn.Close()
+            go io.Copy(inConn, outConn)
+            io.Copy(outConn, inConn)
+        }(outConn)
     }
-}
-func handleOut(outConn net.Conn) {
-    defer outConn.Close()
-    clientIP := outConn.RemoteAddr().(*net.TCPAddr).IP.String()
-    if !inIPlist(clientIP, "IPlist") {
-        log.Printf("[WAR-30] %v", clientIP)
-        return
-    }
-    inConn, err := net.Dial("tcp", *ibnd)
-    if err != nil {
-        log.Printf("[WAR-31] %v", err)
-        return
-    }
-    defer inConn.Close()
-    go io.Copy(inConn, outConn)
-    io.Copy(outConn, inConn)
 }
 func inIPlist(ip string, list string) bool {
     file, err := os.Open(list)
@@ -110,13 +109,13 @@ func inIPlist(ip string, list string) bool {
         if os.IsNotExist(err) {
             file, err := os.Create(list)
                 if err != nil {
-                    log.Printf("[WAR-40] %v", err)
+                    log.Printf("[WAR-30] %v", err)
                     return false
                 }
             defer file.Close()
             return false
         }
-        log.Printf("[WAR-41] %v", err)
+        log.Printf("[WAR-31] %v", err)
         return false
     }
     defer file.Close()
@@ -127,7 +126,7 @@ func inIPlist(ip string, list string) bool {
         }
     }
     if err := scanner.Err(); err != nil {
-        log.Printf("[WAR-41] %v", err)
+        log.Printf("[WAR-32] %v", err)
     }
     return false
 }

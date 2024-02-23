@@ -52,16 +52,16 @@ func ListenAndAuth() {
             http.Error(w, "[WAR-11]", 500)
             return
         }
-        if inIPlist(clientIP, "IPlist") {
-            log.Printf("[WAR-13] %v", clientIP)
-            return
-        }
         file, err := os.OpenFile("IPlist", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
         if err != nil {
             log.Printf("[WAR-12] %v", err)
             return
         }
         defer file.Close()
+        if inIPlist(clientIP, "IPlist") {
+            log.Printf("[WAR-13] %v", clientIP)
+            return
+        }
         if _, err := file.WriteString(clientIP+"\n"); err != nil {
             log.Printf("[WAR-14] %v", err)
             return
@@ -103,8 +103,8 @@ func handleOut(outConn net.Conn) {
     go io.Copy(inConn, outConn)
     io.Copy(outConn, inConn)
 }
-func inIPlist(ip string, iplist string) bool {
-    file, err := os.OpenFile(iplist, os.O_CREATE|os.O_RDONLY, 0644)
+func inIPlist(ip string, list string) bool {
+    file, err := os.OpenFile(list, os.O_CREATE|os.O_RDONLY, 0644)
     if err != nil {
         log.Printf("[WAR-40] %v", err)
         return false

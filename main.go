@@ -33,7 +33,7 @@ func main() {
     }
     if *ibnd != "" {
         log.Printf("[LISTEN] %v <-> %v", *obnd, *ibnd)
-        go ListenAndCopy()
+        ListenAndCopy()
     } else {
         log.Println("[WAR-00] No Inbound Service")
     }

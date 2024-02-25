@@ -10,29 +10,29 @@ import (
     "strings"
 )
 var (
-    addr = flag.String("a", ":90", "addr")
-    ibnd = flag.String("i", "", "inbound")
-    obnd = flag.String("o", ":10", "outbound")
-    path = flag.String("p", "/ip", "path")
+    add = flag.String("add", ":8080", "Address")
+    ibd = flag.String("in", "", "Inbound")
+    obd = flag.String("out", ":10101", "Outbound")
+    pre = flag.String("pre", "/hello", "Prefix")
 )
 func main() {
     flag.Parse()
-    _, portAddr, err := net.SplitHostPort(*addr)
+    _, portAddr, err := net.SplitHostPort(*add)
     if err != nil {
         log.Fatalf("[ERR-00] %v", err)
     }
-    _, portObnd, err := net.SplitHostPort(*obnd)
+    _, portObnd, err := net.SplitHostPort(*obd)
     if err != nil {
         log.Fatalf("[ERR-01] %v", err)
     }
     if portAddr != portObnd {
-        log.Printf("[LISTEN] %v%v", *addr, *path)
+        log.Printf("[LISTEN] %v%v", *add, *pre)
         go ListenAndAuth()
     } else {
         log.Fatal("[ERR-02] Server Port Conflict")
     }
-    if *ibnd != "" {
-        log.Printf("[LISTEN] %v <-> %v", *obnd, *ibnd)
+    if *ibd != "" {
+        log.Printf("[LISTEN] %v <-> %v", *obd, *ibd)
         ListenAndCopy()
     } else {
         log.Println("[WAR-00] No Inbound Service")
@@ -40,7 +40,7 @@ func main() {
     select {}
 }
 func ListenAndAuth() {
-    http.HandleFunc(*path, func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc(*pre, func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
             log.Printf("[WAR-10] %v", err)
@@ -67,12 +67,12 @@ func ListenAndAuth() {
             return
         }
     })
-    if err := http.ListenAndServe(*addr, nil); err != nil {
+    if err := http.ListenAndServe(*add, nil); err != nil {
         log.Fatalf("[ERR-10] %v", err)
     }
 }
 func ListenAndCopy() {
-    listener, err := net.Listen("tcp", *obnd)
+    listener, err := net.Listen("tcp", *obd)
     if err != nil {
         log.Printf("[WAR-20] %v", err)
         return
@@ -91,7 +91,7 @@ func ListenAndCopy() {
                 log.Printf("[WAR-22] %v", clientIP)
                 return
             }
-            inConn, err := net.Dial("tcp", *ibnd)
+            inConn, err := net.Dial("tcp", *ibd)
             if err != nil {
                 log.Printf("[WAR-23] %v", err)
                 return

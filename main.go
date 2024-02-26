@@ -11,8 +11,8 @@ import (
 )
 var (
     add = flag.String("add", ":8080", "Address")
-    ibd = flag.String("in", "", "Inbound")
-    obd = flag.String("out", ":10101", "Outbound")
+    ibd = flag.String("i", "", "Inbound")
+    obd = flag.String("o", ":10101", "Outbound")
     pre = flag.String("pre", "/hello", "Prefix")
 )
 func main() {

@@ -47,7 +47,7 @@ func ListenAndAuth() {
             http.Error(w, "[WAR-10]", 500)
             return
         }
-        if _, err := w.Write([]byte(clientIP+"\n")); err != nil {
+        if _, err := w.Write([]byte(clientIP + "\n")); err != nil {
             log.Printf("[WAR-11] %v", err)
             http.Error(w, "[WAR-11]", 500)
             return
@@ -62,7 +62,7 @@ func ListenAndAuth() {
             log.Printf("[WAR-13] %v", clientIP)
             return
         }
-        if _, err := file.WriteString(clientIP+"\n"); err != nil {
+        if _, err := file.WriteString(clientIP + "\n"); err != nil {
             log.Printf("[WAR-14] %v", err)
             return
         }

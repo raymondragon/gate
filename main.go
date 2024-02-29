@@ -10,9 +10,9 @@ import (
     "strings"
 )
 var (
-    add = flag.String("add", ":80", "Address")
     fwd = flag.String("F", "", "Forward")
     lis = flag.String("L", ":10101", "Listen")
+    add = flag.String("add", ":80", "Address")
     pre = flag.String("pre", "/pre", "Prefix")
 )
 func main() {

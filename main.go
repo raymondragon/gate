@@ -108,13 +108,11 @@ func inIPlist(ip string, list string) bool {
         if os.IsNotExist(err) {
             file, err := os.Create(list)
             if err != nil {
-                log.Printf("[WAR-30] %v", err)
                 return false
             }
             defer file.Close()
             return false
         }
-        log.Printf("[WAR-31] %v", err)
         return false
     }
     defer file.Close()
@@ -123,9 +121,6 @@ func inIPlist(ip string, list string) bool {
         if strings.TrimSpace(scanner.Text()) == ip {
             return true
         }
-    }
-    if err := scanner.Err(); err != nil {
-        log.Printf("[WAR-32] %v", err)
     }
     return false
 }

@@ -10,10 +10,10 @@ import (
     "strings"
 )
 var (
-    add = flag.String("add", ":8080", "Address")
-    ibd = flag.String("i", "", "Inbound")
-    obd = flag.String("o", ":10101", "Outbound")
-    pre = flag.String("pre", "/hello", "Prefix")
+    add = flag.String("add", ":80", "Address")
+    for = flag.String("F", "", "Forward")
+    lis = flag.String("L", ":10101", "Listen")
+    pre = flag.String("pre", "/pre", "Prefix")
 )
 func main() {
     flag.Parse()
@@ -21,7 +21,7 @@ func main() {
     if err != nil {
         log.Fatalf("[ERR-00] %v", err)
     }
-    _, portObnd, err := net.SplitHostPort(*obd)
+    _, portObnd, err := net.SplitHostPort(*lis)
     if err != nil {
         log.Fatalf("[ERR-01] %v", err)
     }
@@ -31,11 +31,11 @@ func main() {
     } else {
         log.Fatal("[ERR-02] Server Port Conflict")
     }
-    if *ibd != "" {
-        log.Printf("[LISTEN] %v <-> %v", *obd, *ibd)
+    if *for != "" {
+        log.Printf("[LISTEN] %v <-> %v", *lis, *for)
         ListenAndCopy()
     } else {
-        log.Println("[WAR-00] No Inbound Service")
+        log.Println("[WAR-00] No Forward Service")
     }
     select {}
 }
@@ -72,7 +72,7 @@ func ListenAndAuth() {
     }
 }
 func ListenAndCopy() {
-    listener, err := net.Listen("tcp", *obd)
+    listener, err := net.Listen("tcp", *lis)
     if err != nil {
         log.Printf("[WAR-20] %v", err)
         return
@@ -91,7 +91,7 @@ func ListenAndCopy() {
                 log.Printf("[WAR-22] %v", clientIP)
                 return
             }
-            inConn, err := net.Dial("tcp", *ibd)
+            inConn, err := net.Dial("tcp", *for)
             if err != nil {
                 log.Printf("[WAR-23] %v", err)
                 return

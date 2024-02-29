@@ -11,7 +11,7 @@ import (
 )
 var (
     add = flag.String("add", ":80", "Address")
-    for = flag.String("F", "", "Forward")
+    fwd = flag.String("F", "", "Forward")
     lis = flag.String("L", ":10101", "Listen")
     pre = flag.String("pre", "/pre", "Prefix")
 )
@@ -31,8 +31,8 @@ func main() {
     } else {
         log.Fatal("[ERR-02] Server Port Conflict")
     }
-    if *for != "" {
-        log.Printf("[LISTEN] %v <-> %v", *lis, *for)
+    if *fwd != "" {
+        log.Printf("[LISTEN] %v <-> %v", *lis, *fwd)
         ListenAndCopy()
     } else {
         log.Println("[WAR-00] No Forward Service")
@@ -91,7 +91,7 @@ func ListenAndCopy() {
                 log.Printf("[WAR-22] %v", clientIP)
                 return
             }
-            inConn, err := net.Dial("tcp", *for)
+            inConn, err := net.Dial("tcp", *fwd)
             if err != nil {
                 log.Printf("[WAR-23] %v", err)
                 return

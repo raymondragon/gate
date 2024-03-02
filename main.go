@@ -20,15 +20,15 @@ var (
 
 func main() {
     flag.Parse()
-    _, portAdd, err := net.SplitHostPort(*authAdd)
+    _, portAuth, err := net.SplitHostPort(*authAdd)
     if err != nil {
         log.Fatalf("[ERR-00] %v", err)
     }
-    _, portFwd, err := net.SplitHostPort(*lisnAdd)
+    _, portLisn, err := net.SplitHostPort(*lisnAdd)
     if err != nil {
         log.Fatalf("[ERR-01] %v", err)
     }
-    if portAdd != portFwd {
+    if portAuth != portLisn {
         log.Printf("[LISTEN] %v%v", *authAdd, *pathStr)
         go ListenAndAuth()
     } else {

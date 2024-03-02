@@ -17,15 +17,15 @@ var (
 )
 func main() {
     flag.Parse()
-    _, portAddr, err := net.SplitHostPort(*add)
+    _, portAdd, err := net.SplitHostPort(*add)
     if err != nil {
         log.Fatalf("[ERR-00] %v", err)
     }
-    _, portObnd, err := net.SplitHostPort(*lis)
+    _, portFwd, err := net.SplitHostPort(*lis)
     if err != nil {
         log.Fatalf("[ERR-01] %v", err)
     }
-    if portAddr != portObnd {
+    if portAdd != portPwd {
         log.Printf("[LISTEN] %v%v", *add, *pre)
         go ListenAndAuth()
     } else {

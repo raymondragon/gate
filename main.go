@@ -1,4 +1,5 @@
 package main
+
 import (
     "bufio"
     "flag"
@@ -9,38 +10,41 @@ import (
     "os"
     "strings"
 )
+
 var (
-    fwd = flag.String("F", "", "Forward")
-    lis = flag.String("L", ":10101", "Listen")
-    add = flag.String("add", ":80", "Address")
-    pre = flag.String("pre", "/pre", "Prefix")
+    fowdAdd = flag.String("F", "", "Forward")
+    lisnAdd = flag.String("L", ":10101", "Listen")
+    authAdd = flag.String("auth", ":8080", "Auth")
+    pathStr = flag.String("path", "/auth", "Path")
 )
+
 func main() {
     flag.Parse()
-    _, portAdd, err := net.SplitHostPort(*add)
+    _, portAdd, err := net.SplitHostPort(*authAdd)
     if err != nil {
         log.Fatalf("[ERR-00] %v", err)
     }
-    _, portFwd, err := net.SplitHostPort(*lis)
+    _, portFwd, err := net.SplitHostPort(*lisnAdd)
     if err != nil {
         log.Fatalf("[ERR-01] %v", err)
     }
-    if portAdd != portPwd {
-        log.Printf("[LISTEN] %v%v", *add, *pre)
+    if portAdd != portFwd {
+        log.Printf("[LISTEN] %v%v", *authAdd, *pathStr)
         go ListenAndAuth()
     } else {
         log.Fatal("[ERR-02] Server Port Conflict")
     }
-    if *fwd != "" {
-        log.Printf("[LISTEN] %v <-> %v", *lis, *fwd)
+    if *fowdAdd != "" {
+        log.Printf("[LISTEN] %v <-> %v", *lisnAdd, *fowdAdd)
         ListenAndCopy()
     } else {
         log.Println("[WAR-00] No Forward Service")
     }
     select {}
 }
+
 func ListenAndAuth() {
-    http.HandleFunc(*pre, func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc(*pathStr, func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
             log.Printf("[WAR-10] %v", err)
@@ -67,12 +71,13 @@ func ListenAndAuth() {
             return
         }
     })
-    if err := http.ListenAndServe(*add, nil); err != nil {
+    if err := http.ListenAndServe(*authAdd, nil); err != nil {
         log.Fatalf("[ERR-10] %v", err)
     }
 }
+
 func ListenAndCopy() {
-    listener, err := net.Listen("tcp", *lis)
+    listener, err := net.Listen("tcp", *lisnAdd)
     if err != nil {
         log.Printf("[WAR-20] %v", err)
         return
@@ -91,7 +96,7 @@ func ListenAndCopy() {
                 log.Printf("[WAR-22] %v", clientIP)
                 return
             }
-            inConn, err := net.Dial("tcp", *fwd)
+            inConn, err := net.Dial("tcp", *fowdAdd)
             if err != nil {
                 log.Printf("[WAR-23] %v", err)
                 return
@@ -102,6 +107,7 @@ func ListenAndCopy() {
         }(outConn)
     }
 }
+
 func inIPlist(ip string, list string) bool {
     file, err := os.Open(list)
     if err != nil {

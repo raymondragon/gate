@@ -21,7 +21,7 @@ func main() {
     if err != nil {
         log.Fatalf("[ERR-00] %v", err)
     }
-    switch authAddr {
+    switch *authAddr {
     case "":
         if *remtAddr != "" {
             log.Printf("[LISTEN] %v <-> %v", *loclAddr, *remtAddr)

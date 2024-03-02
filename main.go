@@ -1,5 +1,4 @@
 package main
-
 import (
     "bufio"
     "flag"
@@ -10,41 +9,48 @@ import (
     "os"
     "strings"
 )
-
 var (
-    fowdAdd = flag.String("F", "", "Forward")
-    lisnAdd = flag.String("L", ":10101", "Listen")
-    authAdd = flag.String("auth", ":8080", "Auth")
-    pathStr = flag.String("path", "/auth", "Path")
+    loclAddr = flag.String("L", "", "Local")
+    remtAddr = flag.String("R", "", "Remote")
+    authAddr = flag.String("addr", "", "AuthAddr")
+    authPath = flag.String("path", "", "AuthPath")
 )
-
 func main() {
     flag.Parse()
-    _, portAuth, err := net.SplitHostPort(*authAdd)
+    _, portLocl, err := net.SplitHostPort(*loclAddr)
     if err != nil {
         log.Fatalf("[ERR-00] %v", err)
     }
-    _, portLisn, err := net.SplitHostPort(*lisnAdd)
-    if err != nil {
-        log.Fatalf("[ERR-01] %v", err)
+    switch authAddr {
+    case "":
+        if *remtAddr != "" {
+            log.Printf("[LISTEN] %v <-> %v", *loclAddr, *remtAddr)
+            ListenAndCopy()
+        } else {
+            log.Printf("[WAR-00] %v", "None Remote Service")
+        }
+    default:
+        _, portAuth, err := net.SplitHostPort(*authAddr)
+        if err != nil {
+            log.Fatalf("[ERR-01] %v", err)
+        }
+        if portAuth != portLocl {
+            log.Printf("[LISTEN] %v%v", *authAddr, *authPath)
+            go ListenAndAuth()
+        } else {
+            log.Fatalf("[ERR-02] %v", "Server Port Conflict")
+        }
+        if *remtAddr != "" {
+            log.Printf("[LISTEN] %v <-> %v", *loclAddr, *remtAddr)
+            ListenAndCopy()
+        } else {
+            log.Printf("[WAR-01] %v", "None Remote Service")
+        }
+        select {}
     }
-    if portAuth != portLisn {
-        log.Printf("[LISTEN] %v%v", *authAdd, *pathStr)
-        go ListenAndAuth()
-    } else {
-        log.Fatal("[ERR-02] Server Port Conflict")
-    }
-    if *fowdAdd != "" {
-        log.Printf("[LISTEN] %v <-> %v", *lisnAdd, *fowdAdd)
-        ListenAndCopy()
-    } else {
-        log.Println("[WAR-00] No Forward Service")
-    }
-    select {}
 }
-
 func ListenAndAuth() {
-    http.HandleFunc(*pathStr, func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc(*authPath, func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
             log.Printf("[WAR-10] %v", err)
@@ -71,43 +77,41 @@ func ListenAndAuth() {
             return
         }
     })
-    if err := http.ListenAndServe(*authAdd, nil); err != nil {
+    if err := http.ListenAndServe(*authAddr, nil); err != nil {
         log.Fatalf("[ERR-10] %v", err)
     }
 }
-
 func ListenAndCopy() {
-    listener, err := net.Listen("tcp", *lisnAdd)
+    listener, err := net.Listen("tcp", *loclAddr)
     if err != nil {
         log.Printf("[WAR-20] %v", err)
         return
     }
     defer listener.Close()
     for {
-        outConn, err := listener.Accept()
+        loclConn, err := listener.Accept()
         if err != nil {
             log.Printf("[WAR-21] %v", err)
             continue
         }
-        go func(outConn net.Conn) {
-            defer outConn.Close()
-            clientIP := outConn.RemoteAddr().(*net.TCPAddr).IP.String()
-            if !inIPlist(clientIP, "IPlist") {
+        go func(loclConn net.Conn) {
+            defer loclConn.Close()
+            clientIP := loclConn.RemoteAddr().(*net.TCPAddr).IP.String()
+            if *authAddr != "" && !inIPlist(clientIP, "IPlist") {
                 log.Printf("[WAR-22] %v", clientIP)
                 return
             }
-            inConn, err := net.Dial("tcp", *fowdAdd)
+            remtConn, err := net.Dial("tcp", *remtAddr)
             if err != nil {
                 log.Printf("[WAR-23] %v", err)
                 return
             }
-            defer inConn.Close()
-            go io.Copy(inConn, outConn)
-            io.Copy(outConn, inConn)
-        }(outConn)
+            defer remtConn.Close()
+            go io.Copy(remtConn, loclConn)
+            io.Copy(loclConn, remtConn)
+        }(loclConn)
     }
 }
-
 func inIPlist(ip string, list string) bool {
     file, err := os.Open(list)
     if err != nil {

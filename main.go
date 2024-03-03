@@ -12,8 +12,8 @@ import (
 var (
     loclAddr = flag.String("L", "", "Local")
     remtAddr = flag.String("R", "", "Remote")
-    authAddr = flag.String("addr", "", "AuthAddr")
-    authPath = flag.String("path", "", "AuthPath")
+    authAddr = flag.String("addr", "", "Auth")
+    authPath = flag.String("path", "", "Auth")
 )
 func main() {
     flag.Parse()

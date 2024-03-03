@@ -6,50 +6,55 @@ import (
     "log"
     "net"
     "net/http"
+    "net/url"
     "os"
     "strings"
 )
 var (
+    authRurl = flag.String("A", "", "Auth")
     loclAddr = flag.String("L", "", "Local")
     remtAddr = flag.String("R", "", "Remote")
-    authAddr = flag.String("addr", "", "Auth")
-    authPath = flag.String("path", "", "Auth")
 )
+type ParsedURL struct {
+    Hostname string
+    Port     string
+    Path     string
+}
 func main() {
     flag.Parse()
     _, portLocl, err := net.SplitHostPort(*loclAddr)
     if err != nil {
         log.Fatalf("[ERRO-0] %v", err)
     }
-    switch *authAddr {
+    switch *authRurl {
     case "":
         if *remtAddr != "" {
             log.Printf("[INFO-0] %v <-> %v", *loclAddr, *remtAddr)
-            ListenAndCopy(*loclAddr, *remtAddr, *authAddr)
+            ListenAndCopy(*loclAddr, *remtAddr, *authRurl)
         } else {
             log.Fatalf("[ERRO-1] %v", "None Remote Service")
         }
     default:
-        _, portAuth, err := net.SplitHostPort(*authAddr)
+        parsedURL, err := urlParse(*authRurl)
         if err != nil {
             log.Fatalf("[ERRO-2] %v", err)
         }
-        if portAuth != portLocl {
-            log.Printf("[INFO-1] Auth -> %v%v", *authAddr, *authPath)
-            go ListenAndAuth(*authAddr, *authPath)
+        if parsedURL.Port != portLocl {
+            log.Printf("[INFO-1] %v", *authRurl)
+            go ListenAndAuth(parsedURL.Hostname, parsedURL.Port, parsedURL.Path)
         } else {
             log.Fatalf("[ERRO-3] %v", "Server Port Conflict")
         }
         if *remtAddr != "" {
             log.Printf("[INFO-2] %v <-> %v", *loclAddr, *remtAddr)
-            ListenAndCopy(*loclAddr, *remtAddr, *authAddr)
+            ListenAndCopy(*loclAddr, *remtAddr, *authRurl)
         } else {
             log.Printf("[WARN-0] %v", "Remote Service Unprovided")
         }
         select {}
     }
 }
-func ListenAndAuth(authAddr string, authPath string) {
+func ListenAndAuth(authName string, authPort string, authPath string) {
     http.HandleFunc(authPath, func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
@@ -77,11 +82,11 @@ func ListenAndAuth(authAddr string, authPath string) {
             return
         }
     })
-    if err := http.ListenAndServe(authAddr, nil); err != nil {
+    if err := http.ListenAndServe(authName+":"+authPort, nil); err != nil {
         log.Fatalf("[ERRO-4] %v", err)
     }
 }
-func ListenAndCopy(loclAddr string, remtAddr string, authAddr string) {
+func ListenAndCopy(loclAddr string, remtAddr string, authRurl string) {
     listener, err := net.Listen("tcp", loclAddr)
     if err != nil {
         log.Printf("[WARN-6] %v", err)
@@ -97,7 +102,7 @@ func ListenAndCopy(loclAddr string, remtAddr string, authAddr string) {
         go func(loclConn net.Conn) {
             defer loclConn.Close()
             clientIP := loclConn.RemoteAddr().(*net.TCPAddr).IP.String()
-            if authAddr != "" && !inIPlist(clientIP, "IPlist") {
+            if authRurl != "" && !inIPlist(clientIP, "IPlist") {
                 log.Printf("[WARN-8] %v", clientIP)
                 return
             }
@@ -111,6 +116,17 @@ func ListenAndCopy(loclAddr string, remtAddr string, authAddr string) {
             io.Copy(loclConn, remtConn)
         }(loclConn)
     }
+}
+func urlParse(rawURL string) (ParsedURL, error) {
+    u, err := url.Parse(rawURL)
+    if err != nil {
+        return ParsedURL{}, err
+    }
+    return ParsedURL{
+        Hostname: u.Hostname(),
+        Port:     u.Port(),
+        Path:     u.Path,
+    }, nil
 }
 func inIPlist(ip string, list string) bool {
     file, err := os.Open(list)

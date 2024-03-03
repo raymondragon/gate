@@ -25,7 +25,7 @@ func main() {
     case "":
         if *remtAddr != "" {
             log.Printf("[LISTEN] %v <-> %v", *loclAddr, *remtAddr)
-            ListenAndCopy()
+            ListenAndCopy(*loclAddr, *remtAddr, *authAddr)
         } else {
             log.Printf("[WAR-00] %v", "None Remote Service")
         }
@@ -36,21 +36,21 @@ func main() {
         }
         if portAuth != portLocl {
             log.Printf("[LISTEN] %v%v", *authAddr, *authPath)
-            go ListenAndAuth()
+            go ListenAndAuth(*authAddr, *authPath)
         } else {
             log.Fatalf("[ERR-02] %v", "Server Port Conflict")
         }
         if *remtAddr != "" {
             log.Printf("[LISTEN] %v <-> %v", *loclAddr, *remtAddr)
-            ListenAndCopy()
+            ListenAndCopy(*loclAddr, *remtAddr, *authAddr)
         } else {
             log.Printf("[WAR-01] %v", "None Remote Service")
         }
         select {}
     }
 }
-func ListenAndAuth() {
-    http.HandleFunc(*authPath, func(w http.ResponseWriter, r *http.Request) {
+func ListenAndAuth(authAddr string, authPath string) {
+    http.HandleFunc(authPath, func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
             log.Printf("[WAR-10] %v", err)
@@ -77,12 +77,12 @@ func ListenAndAuth() {
             return
         }
     })
-    if err := http.ListenAndServe(*authAddr, nil); err != nil {
+    if err := http.ListenAndServe(authAddr, nil); err != nil {
         log.Fatalf("[ERR-10] %v", err)
     }
 }
-func ListenAndCopy() {
-    listener, err := net.Listen("tcp", *loclAddr)
+func ListenAndCopy(loclAddr string, remtAddr string, authAddr string) {
+    listener, err := net.Listen("tcp", loclAddr)
     if err != nil {
         log.Printf("[WAR-20] %v", err)
         return
@@ -97,11 +97,11 @@ func ListenAndCopy() {
         go func(loclConn net.Conn) {
             defer loclConn.Close()
             clientIP := loclConn.RemoteAddr().(*net.TCPAddr).IP.String()
-            if *authAddr != "" && !inIPlist(clientIP, "IPlist") {
+            if authAddr != "" && !inIPlist(clientIP, "IPlist") {
                 log.Printf("[WAR-22] %v", clientIP)
                 return
             }
-            remtConn, err := net.Dial("tcp", *remtAddr)
+            remtConn, err := net.Dial("tcp", remtAddr)
             if err != nil {
                 log.Printf("[WAR-23] %v", err)
                 return

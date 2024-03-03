@@ -19,32 +19,32 @@ func main() {
     flag.Parse()
     _, portLocl, err := net.SplitHostPort(*loclAddr)
     if err != nil {
-        log.Fatalf("[ERR-00] %v", err)
+        log.Fatalf("[ERRO-0] %v", err)
     }
     switch *authAddr {
     case "":
         if *remtAddr != "" {
-            log.Printf("[LISTEN] %v <-> %v", *loclAddr, *remtAddr)
+            log.Printf("[INFO-0] %v <-> %v", *loclAddr, *remtAddr)
             ListenAndCopy(*loclAddr, *remtAddr, *authAddr)
         } else {
-            log.Printf("[WAR-00] %v", "None Remote Service")
+            log.Fatalf("[ERRO-1] %v", "None Remote Service")
         }
     default:
         _, portAuth, err := net.SplitHostPort(*authAddr)
         if err != nil {
-            log.Fatalf("[ERR-01] %v", err)
+            log.Fatalf("[ERRO-2] %v", err)
         }
         if portAuth != portLocl {
-            log.Printf("[LISTEN] %v%v", *authAddr, *authPath)
+            log.Printf("[INFO-1] Auth -> %v%v", *authAddr, *authPath)
             go ListenAndAuth(*authAddr, *authPath)
         } else {
-            log.Fatalf("[ERR-02] %v", "Server Port Conflict")
+            log.Fatalf("[ERRO-3] %v", "Server Port Conflict")
         }
         if *remtAddr != "" {
-            log.Printf("[LISTEN] %v <-> %v", *loclAddr, *remtAddr)
+            log.Printf("[INFO-2] %v <-> %v", *loclAddr, *remtAddr)
             ListenAndCopy(*loclAddr, *remtAddr, *authAddr)
         } else {
-            log.Printf("[WAR-01] %v", "None Remote Service")
+            log.Printf("[WARN-0] %v", "Remote Service Unprovided")
         }
         select {}
     }
@@ -53,57 +53,57 @@ func ListenAndAuth(authAddr string, authPath string) {
     http.HandleFunc(authPath, func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
-            log.Printf("[WAR-10] %v", err)
-            http.Error(w, "[WAR-10]", 500)
+            log.Printf("[WARN-1] %v", err)
+            http.Error(w, "[WARN-1]", 500)
             return
         }
         if _, err := w.Write([]byte(clientIP + "\n")); err != nil {
-            log.Printf("[WAR-11] %v", err)
-            http.Error(w, "[WAR-11]", 500)
+            log.Printf("[WARN-2] %v", err)
+            http.Error(w, "[WARN-2]", 500)
             return
         }
         file, err := os.OpenFile("IPlist", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
         if err != nil {
-            log.Printf("[WAR-12] %v", err)
+            log.Printf("[WARN-3] %v", err)
             return
         }
         defer file.Close()
         if inIPlist(clientIP, "IPlist") {
-            log.Printf("[WAR-13] %v", clientIP)
+            log.Printf("[WARN-4] %v", clientIP)
             return
         }
         if _, err := file.WriteString(clientIP + "\n"); err != nil {
-            log.Printf("[WAR-14] %v", err)
+            log.Printf("[WARN-5] %v", err)
             return
         }
     })
     if err := http.ListenAndServe(authAddr, nil); err != nil {
-        log.Fatalf("[ERR-10] %v", err)
+        log.Fatalf("[ERRO-4] %v", err)
     }
 }
 func ListenAndCopy(loclAddr string, remtAddr string, authAddr string) {
     listener, err := net.Listen("tcp", loclAddr)
     if err != nil {
-        log.Printf("[WAR-20] %v", err)
+        log.Printf("[WARN-6] %v", err)
         return
     }
     defer listener.Close()
     for {
         loclConn, err := listener.Accept()
         if err != nil {
-            log.Printf("[WAR-21] %v", err)
+            log.Printf("[WARN-7] %v", err)
             continue
         }
         go func(loclConn net.Conn) {
             defer loclConn.Close()
             clientIP := loclConn.RemoteAddr().(*net.TCPAddr).IP.String()
             if authAddr != "" && !inIPlist(clientIP, "IPlist") {
-                log.Printf("[WAR-22] %v", clientIP)
+                log.Printf("[WARN-8] %v", clientIP)
                 return
             }
             remtConn, err := net.Dial("tcp", remtAddr)
             if err != nil {
-                log.Printf("[WAR-23] %v", err)
+                log.Printf("[WARN-9] %v", err)
                 return
             }
             defer remtConn.Close()

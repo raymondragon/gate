@@ -59,7 +59,6 @@ func ListenAndAuth(authName string, authPort string, authPath string) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
             log.Printf("[WARN-1] %v", err)
-            http.Error(w, "[WARN-1]", 500)
             return
         }
         if _, err := w.Write([]byte(clientIP + "\n")); err != nil {
@@ -101,14 +100,12 @@ func ListenAndCopy(loclAddr string, remtAddr string, authRurl string) {
         }
         go func(loclConn net.Conn) {
             defer loclConn.Close()
-            clientIP := loclConn.RemoteAddr().(*net.TCPAddr).IP.String()
-            if authRurl != "" && !inIPlist(clientIP, "IPlist") {
-                log.Printf("[WARN-8] %v", clientIP)
+            if authRurl != "" && !inIPlist(loclConn.RemoteAddr().(*net.TCPAddr).IP.String(), "IPlist") {
                 return
             }
             remtConn, err := net.Dial("tcp", remtAddr)
             if err != nil {
-                log.Printf("[WARN-9] %v", err)
+                log.Printf("[WARN-8] %v", err)
                 return
             }
             defer remtConn.Close()

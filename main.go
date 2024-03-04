@@ -49,7 +49,7 @@ func main() {
         }
         log.Printf("[INFO-3] %v", *authURL)
         go ListenAndAuth(authedURL.Hostname, authedURL.Port, authedURL.Path)
-        log.Printf("[INFO-4] %v <-> %v", parsedURL.Hostname+":"+parsedURL.Port, parsedURL.Fragment)
+        log.Printf("[INFO-4] %v <-> %v", tranedURL.Hostname+":"+tranedURL.Port, tranedURL.Fragment)
         ListenAndCopy(tranedURL.Hostname+":"+ tranedURL.Port, tranedURL.Fragment, true)
         select {}
     default:

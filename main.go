@@ -73,11 +73,10 @@ func ListenAndAuth(authName string, authPort string, authPath string) {
         }
         defer file.Close()
         if inIPlist(clientIP, "IPlist") {
-            log.Printf("[WARN-4] %v", clientIP)
             return
         }
         if _, err := file.WriteString(clientIP + "\n"); err != nil {
-            log.Printf("[WARN-5] %v", err)
+            log.Printf("[WARN-4] %v", err)
             return
         }
     })
@@ -88,20 +87,26 @@ func ListenAndAuth(authName string, authPort string, authPath string) {
 func ListenAndCopy(loclAddr string, remtAddr string, authRurl string) {
     listener, err := net.Listen("tcp", loclAddr)
     if err != nil {
-        log.Printf("[WARN-6] %v", err)
+        log.Printf("[WARN-5] %v", err)
         return
     }
     defer listener.Close()
     for {
         loclConn, err := listener.Accept()
         if err != nil {
-            log.Printf("[WARN-7] %v", err)
+            log.Printf("[WARN-6] %v", err)
             continue
         }
         go func(loclConn net.Conn) {
             defer loclConn.Close()
-            if authRurl != "" && !inIPlist(loclConn.RemoteAddr().(*net.TCPAddr).IP.String(), "IPlist") {
-                return
+            clientIP := loclConn.RemoteAddr().(*net.TCPAddr).IP.String()
+            if authRurl != "" && !inIPlist(clientIP, "IPlist") {
+                if authRurl != "" {
+                    return
+                } else {
+                    log.Printf("[WARN-7] %v", clientIP)
+                    return
+                }
             }
             remtConn, err := net.Dial("tcp", remtAddr)
             if err != nil {

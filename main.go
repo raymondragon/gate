@@ -128,14 +128,6 @@ func urlParse(rawURL string) (ParsedURL, error) {
 func inIPlist(ip string, list string) bool {
     file, err := os.Open(list)
     if err != nil {
-        if os.IsNotExist(err) {
-            file, err := os.Create(list)
-            if err != nil {
-                return false
-            }
-            defer file.Close()
-            return false
-        }
         return false
     }
     defer file.Close()

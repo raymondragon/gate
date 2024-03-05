@@ -34,9 +34,9 @@ func main() {
             log.Fatalf("[ERRO-1] %v", err)
         }
         log.Printf("[INFO-0] %v", *authURL)
-        go ListenAndAuth(authedURL.Hostname, authedURL.Port, authedURL.Path)
-        log.Printf("[INFO-1] %v <-> %v", tranedURL.Hostname+":"+tranedURL.Port, tranedURL.Fragment)
-        ListenAndCopy(tranedURL.Hostname+":"+ tranedURL.Port, tranedURL.Fragment, true)
+        go ListenAndAuth(authedURL)
+        log.Printf("[INFO-1] %v", *tranURL)
+        ListenAndCopy(tranedURL, true)
         select {}
     case *authURL != "" && *tranURL == "":
         parsedURL, err := urlParse(*authURL)
@@ -44,75 +44,85 @@ func main() {
             log.Fatalf("[ERRO-2] %v", err)
         }
         log.Printf("[INFO-2] %v", *authURL)
-        ListenAndAuth(parsedURL.Hostname, parsedURL.Port, parsedURL.Path)
+        ListenAndAuth(parsedURL)
     case *authURL == "" && *tranURL != "":
         parsedURL, err := urlParse(*tranURL)
         if err != nil {
             log.Fatalf("[ERRO-3] %v", err)
         }
-        log.Printf("[INFO-3] %v <-> %v", parsedURL.Hostname+":"+parsedURL.Port, parsedURL.Fragment)
-        ListenAndCopy(parsedURL.Hostname+":"+parsedURL.Port, parsedURL.Fragment, false)
+        log.Printf("[INFO-3] %v", *tranURL)
+        ListenAndCopy(parsedURL, false)
     default:
-        log.Fatalf("[ERRO-4] %v", "No URL Provided")
+        log.Fatalf("[ERRO-4] %v", "URL Flag Unprovided")
     }
 }
-func ListenAndAuth(authName string, authPort string, authPath string) {
-    http.HandleFunc(authPath, func(w http.ResponseWriter, r *http.Request) {
-        clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
-        if err != nil {
-            log.Printf("[WARN-0] %v", err)
-            return
-        }
-        if _, err := w.Write([]byte(clientIP + "\n")); err != nil {
-            log.Printf("[WARN-1] %v", err)
-            http.Error(w, "[WARN-1]", 500)
-            return
-        }
-        file, err := os.OpenFile("IPlist", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-        if err != nil {
-            log.Printf("[WARN-2] %v", err)
-            return
-        }
-        defer file.Close()
-        if inIPlist(clientIP, "IPlist") {
-            return
-        }
-        if _, err := file.WriteString(clientIP + "\n"); err != nil {
-            log.Printf("[WARN-3] %v", err)
-            return
-        }
-    })
-    if err := http.ListenAndServe(authName+":"+authPort, nil); err != nil {
-        log.Fatalf("[ERRO-6] %v", err)
-    }
-}
-func ListenAndCopy(localAddr string, remoteAddr string, authEnabled bool) {
-    listener, err := net.Listen("tcp", localAddr)
-    if err != nil {
-        log.Fatalf("[ERRO-7] %v", err)
-    }
-    defer listener.Close()
-    for {
-        localConn, err := listener.Accept()
-        if err != nil {
-            log.Printf("[WARN-4] %v", err)
-            continue
-        }
-        go func(localConn net.Conn) {
-            defer localConn.Close()
-            clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
-            if authEnabled && !inIPlist(clientIP, "IPlist") {
-                log.Printf("[WARN-5] %v", clientIP)
+func ListenAndAuth(parsedURL ParsedURL) {
+    switch parsedURL.Scheme {
+    case "http":
+        http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
+            clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
+            if err != nil {
+                log.Printf("[WARN-0] %v", err)
                 return
             }
-            remoteConn, err := net.Dial("tcp", remoteAddr)
-            if err != nil {
-                log.Fatalf("[ERRO-8] %v", err)
+            if _, err := w.Write([]byte(clientIP + "\n")); err != nil {
+                log.Printf("[WARN-1] %v", err)
+                http.Error(w, "[WARN-1]", 500)
+                return
             }
-            defer remoteConn.Close()
-            go io.Copy(remoteConn, localConn)
-            io.Copy(localConn, remoteConn)
-        }(localConn)
+            file, err := os.OpenFile("IPlist", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+            if err != nil {
+                log.Printf("[WARN-2] %v", err)
+                return
+            }
+            defer file.Close()
+            if inIPlist(clientIP, "IPlist") {
+                return
+            }
+            if _, err := file.WriteString(clientIP + "\n"); err != nil {
+                log.Printf("[WARN-3] %v", err)
+                return
+            }
+        })
+        if err := http.ListenAndServe(parsedURL.Hostname+":"+ parsedURL.Port, nil); err != nil {
+            log.Fatalf("[ERRO-5] %v", err)
+        }
+    default:
+        log.Fatalf("[ERRO-6] %v", "URL Scheme Unsupported")
+    }
+}
+func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
+    switch parsedURL.Scheme {
+    case "tcp":
+        listener, err := net.Listen("tcp", parsedURL.Hostname+":"+parsedURL.Port)
+        if err != nil {
+            log.Fatalf("[ERRO-7] %v", err)
+        }
+        defer listener.Close()
+        for {
+            localConn, err := listener.Accept()
+            if err != nil {
+                log.Printf("[WARN-4] %v", err)
+                continue
+            }
+            go func(localConn net.Conn) {
+                defer localConn.Close()
+                clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
+                if authEnabled && !inIPlist(clientIP, "IPlist") {
+                    log.Printf("[WARN-5] %v", clientIP)
+                    return
+                }
+                remoteConn, err := net.Dial("tcp", parsedURL.Fragment)
+                if err != nil {
+                    log.Fatalf("[ERRO-8] %v", err)
+                }
+                defer remoteConn.Close()
+                go io.Copy(remoteConn, localConn)
+                io.Copy(localConn, remoteConn)
+            }(localConn)
+        }
+    default:
+        log.Fatalf("[ERRO-9] %v", "URL Scheme Unsupported")
     }
 }
 func urlParse(rawURL string) (ParsedURL, error) {

@@ -30,7 +30,6 @@ type ParsedURL struct {
     Hostname string
     Port     string
     Path     string
-    Fragment string
 }
 
 func main() {
@@ -142,7 +141,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                     log.Printf("[WARN-5] %v", clientIP)
                     return
                 }
-                remoteConn, err := net.Dial("tcp", parsedURL.Fragment)
+                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path))
                 if err != nil {
                     log.Fatalf("[ERRO-A] %v", err)
                 }
@@ -166,7 +165,6 @@ func urlParse(rawURL string) (ParsedURL, error) {
         Hostname: u.Hostname(),
         Port:     u.Port(),
         Path:     u.Path,
-        Fragment: u.Fragment,
     }, nil
 }
 

@@ -1,4 +1,6 @@
+
 package main
+
 import (
     "bufio"
     "crypto/rand"
@@ -18,10 +20,12 @@ import (
     "strings"
     "time"
 )
+
 var (
     authURL = flag.String("A", "", "Authentication")
     tranURL = flag.String("T", "", "Transportation")
 )
+
 type ParsedURL struct {
     Scheme   string
     Hostname string
@@ -29,6 +33,7 @@ type ParsedURL struct {
     Path     string
     Fragment string
 }
+
 func main() {
     flag.Parse()
     switch {
@@ -64,6 +69,7 @@ func main() {
         log.Fatalf("[ERRO-4] %v", "URL Flag Unprovided")
     }
 }
+
 func ListenAndAuth(parsedURL ParsedURL) {
     httpHandler := func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -102,7 +108,7 @@ func ListenAndAuth(parsedURL ParsedURL) {
             log.Fatalf("[ERRO-6] %v", err)
         }
         server := &http.Server{
-            Addr:      parsedURL.Hostname+":"+parsedURL.Port,
+            Addr: parsedURL.Hostname + ":" + parsedURL.Port,
             TLSConfig: &tls.Config{
                 Certificates: []tls.Certificate{cert},
             },
@@ -115,6 +121,7 @@ func ListenAndAuth(parsedURL ParsedURL) {
         log.Fatalf("[ERRO-8] %v", "URL Scheme Unsupported")
     }
 }
+
 func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
     switch parsedURL.Scheme {
     case "tcp":
@@ -149,6 +156,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
         log.Fatalf("[ERRO-B] %v", "URL Scheme Unsupported")
     }
 }
+
 func urlParse(rawURL string) (ParsedURL, error) {
     u, err := url.Parse(rawURL)
     if err != nil {
@@ -162,6 +170,7 @@ func urlParse(rawURL string) (ParsedURL, error) {
         Fragment: u.Fragment,
     }, nil
 }
+
 func inIPlist(ip string, list string) bool {
     file, err := os.Open(list)
     if err != nil {
@@ -176,6 +185,7 @@ func inIPlist(ip string, list string) bool {
     }
     return false
 }
+
 func generateCert(orgName string) (tls.Certificate, error) {
     priv, err := rsa.GenerateKey(rand.Reader, 2048)
     if err != nil {

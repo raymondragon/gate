@@ -141,7 +141,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                     log.Printf("[WARN-5] %v", clientIP)
                     return
                 }
-                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path))
+                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
                 if err != nil {
                     log.Fatalf("[ERRO-A] %v", err)
                 }

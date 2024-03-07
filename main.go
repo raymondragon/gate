@@ -69,7 +69,7 @@ func main() {
 }
 
 func ListenAndAuth(parsedURL ParsedURL) {
-    httpHandler := func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
         clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
         if err != nil {
             log.Printf("[WARN-0] %v", err)
@@ -93,8 +93,7 @@ func ListenAndAuth(parsedURL ParsedURL) {
             log.Printf("[WARN-3] %v", err)
             return
         }
-    }
-    http.HandleFunc(parsedURL.Path, httpHandler)
+    })
     switch parsedURL.Scheme {
     case "http":
         if err := http.ListenAndServe(parsedURL.Hostname+":"+parsedURL.Port, nil); err != nil {

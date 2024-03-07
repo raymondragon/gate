@@ -94,9 +94,9 @@ func ListenAndAuth(parsedURL ParsedURL) {
             return
         }
     }
+    http.HandleFunc(parsedURL.Path, httpHandler)
     switch parsedURL.Scheme {
     case "http":
-        http.HandleFunc(parsedURL.Path, httpHandler)
         if err := http.ListenAndServe(parsedURL.Hostname+":"+parsedURL.Port, nil); err != nil {
             log.Fatalf("[ERRO-5] %v", err)
         }
@@ -111,7 +111,6 @@ func ListenAndAuth(parsedURL ParsedURL) {
                 Certificates: []tls.Certificate{cert},
             },
         }
-        http.HandleFunc(parsedURL.Path, httpHandler)
         if err := server.ListenAndServeTLS("", ""); err != nil {
             log.Fatalf("[ERRO-7] %v", err)
         }

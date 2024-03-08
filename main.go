@@ -164,12 +164,12 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
         defer conn.Close()
         for {
             buf := make([]byte, 1024)
-            n, addr, err := conn.ReadFromUDP(buf)
+            n, clientAddr, err := conn.ReadFromUDP(buf)
             if err != nil {
                 log.Printf("[WARN-6] %v", err)
                 continue
             }
-            clientIP := localAddr.IP.String()
+            clientIP := clientAddr.IP.String()
             if authEnabled && !inIPlist(clientIP, "IPlist") {
                 log.Printf("[WARN-7] %v", clientIP)
                 continue

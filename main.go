@@ -143,7 +143,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                     log.Printf("[WARN-5] %v", clientIP)
                     return
                 }
-                remoteConn, err := net.Dial("tcp", parsedURL.Path)
+                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
                 if err != nil {
                     log.Fatalf("[ERRO-B] %v", err)
                 }
@@ -174,7 +174,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                 log.Printf("[WARN-7] %v", clientIP)
                 continue
             }
-            remoteAddr, err := net.ResolveUDPAddr("udp", parsedURL.Path)
+            remoteAddr, err := net.ResolveUDPAddr("udp", strings.TrimPrefix(parsedURL.Path, "/"))
             if err != nil {
                 log.Fatalf("[ERRO-E] %v", err)
             }

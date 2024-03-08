@@ -121,9 +121,13 @@ func ListenAndAuth(parsedURL ParsedURL) {
 func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
     switch parsedURL.Scheme {
     case "tcp":
-        listener, err := net.Listen("tcp", parsedURL.Hostname+":"+parsedURL.Port)
+        localAddr, err := net.ResolveTCPAddr("tcp", parsedURL.Hostname+":"+parsedURL.Port)
         if err != nil {
             log.Fatalf("[ERRO-9] %v", err)
+        }
+        listener, err := net.ListenTCP("tcp", localAddr)
+        if err != nil {
+            log.Fatalf("[ERRO-A] %v", err)
         }
         defer listener.Close()
         for {
@@ -139,17 +143,48 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                     log.Printf("[WARN-5] %v", clientIP)
                     return
                 }
-                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
+                remoteConn, err := net.Dial("tcp", parsedURL.Hostname+":"+parsedURL.Port)
                 if err != nil {
-                    log.Fatalf("[ERRO-A] %v", err)
+                    log.Fatalf("[ERRO-B] %v", err)
                 }
                 defer remoteConn.Close()
                 go io.Copy(remoteConn, localConn)
                 io.Copy(localConn, remoteConn)
             }(localConn)
         }
+    case "udp":
+        localAddr, err := net.ResolveUDPAddr("udp", parsedURL.Hostname+":"+parsedURL.Port)
+        if err != nil {
+            log.Fatalf("[ERRO-C] %v", err)
+        }
+        conn, err := net.ListenUDP("udp", localAddr)
+        if err != nil {
+            log.Fatalf("[ERRO-D] %v", err)
+        }
+        defer conn.Close()
+        for {
+            buf := make([]byte, 1024)
+            n, addr, err := conn.ReadFromUDP(buf)
+            if err != nil {
+                log.Printf("[WARN-6] %v", err)
+                continue
+            }
+            clientIP := addr.IP.String()
+            if authEnabled && !inIPlist(clientIP, "IPlist") {
+                log.Printf("[WARN-7] %v", clientIP)
+                continue
+            }
+            remoteAddr, err := net.ResolveUDPAddr("udp", parsedURL.Hostname+":"+parsedURL.Port)
+            if err != nil {
+                log.Fatalf("[ERRO-E] %v", err)
+            }
+            _, err = conn.WriteToUDP(buf[:n], remoteAddr)
+            if err != nil {
+                log.Printf("[WARN-8] %v", err)
+            }
+        }
     default:
-        log.Fatalf("[ERRO-B] %v", "URL Scheme Unsupported")
+        log.Fatalf("[ERRO-F] %v", "URL Scheme Unsupported")
     }
 }
 

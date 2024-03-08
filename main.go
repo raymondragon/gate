@@ -169,7 +169,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                 log.Printf("[WARN-6] %v", err)
                 continue
             }
-            clientIP := addr.IP.String()
+            clientIP := localAddr.IP.String()
             if authEnabled && !inIPlist(clientIP, "IPlist") {
                 log.Printf("[WARN-7] %v", clientIP)
                 continue

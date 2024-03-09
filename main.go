@@ -21,8 +21,8 @@ import (
 )
 
 var (
-    authURL = flag.String("A", "", "Authentication")
-    tranURL = flag.String("T", "", "Transportation")
+    authURL = flag.String("A", "", "Authorization")
+    tranURL = flag.String("T", "", "Transmissions")
 )
 
 type ParsedURL struct {

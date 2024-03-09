@@ -21,8 +21,8 @@ import (
 )
 
 var (
-    authURL = flag.String("A", "", "Authorization")
-    tranURL = flag.String("T", "", "Transmissions")
+    authURL = flag.String("A", "", "Authorization: http(s)://localhost:port/secret_path")
+    tranURL = flag.String("T", "", "Transmission: tcp(udp)://localhost:port/target_addr")
 )
 
 type ParsedURL struct {

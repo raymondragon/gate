@@ -37,40 +37,40 @@ func main() {
     flag.Parse()
     switch {
     case *authURL != "" && *tranURL != "":
-        authedURL, err := urlParse(*authURL)
+        aURL, err := urlParse(*authURL)
         if err != nil {
             log.Fatalf("[ERRO-0] %v", err)
         }
-        tranedURL, err := urlParse(*tranURL)
+        tURL, err := urlParse(*tranURL)
         if err != nil {
             log.Fatalf("[ERRO-1] %v", err)
         }
-        if authedURL.Fragment == "" {
-            authedURL.Fragment = "IPlist"
+        if aURL.Fragment == "" {
+            aURL.Fragment = "IPlist"
         }
-        tranedURL.Fragment = authedURL.Fragment
+        tURL.Fragment = aURL.Fragment
         log.Printf("[INFO-0] %v", *authURL)
-        go ListenAndAuth(authedURL)
+        go ListenAndAuth(aURL)
         log.Printf("[INFO-1] %v", *tranURL)
-        ListenAndCopy(tranedURL, true)
+        ListenAndCopy(tURL, true)
         select {}
     case *authURL != "" && *tranURL == "":
-        parsedURL, err := urlParse(*authURL)
+        aURL, err := urlParse(*authURL)
         if err != nil {
             log.Fatalf("[ERRO-2] %v", err)
         }
         log.Printf("[INFO-2] %v", *authURL)
-        ListenAndAuth(parsedURL)
+        ListenAndAuth(aURL)
     case *authURL == "" && *tranURL != "":
-        parsedURL, err := urlParse(*tranURL)
+        tURL, err := urlParse(*tranURL)
         if err != nil {
             log.Fatalf("[ERRO-3] %v", err)
         }
         log.Printf("[INFO-3] %v", *tranURL)
-        if parsedURL.Fragment == nil {
-            ListenAndCopy(parsedURL, false)
+        if tURL.Fragment == "" {
+            ListenAndCopy(tURL, false)
         } else {
-            ListenAndCopy(parsedURL, true)
+            ListenAndCopy(tURL, true)
         }
     default:
         log.Fatalf("[ERRO-4] %v", "URL Flag Unprovided")

@@ -67,7 +67,11 @@ func main() {
             log.Fatalf("[ERRO-3] %v", err)
         }
         log.Printf("[INFO-3] %v", *tranURL)
-        ListenAndCopy(parsedURL, false)
+        if parsedURL.Fragment == nil {
+            ListenAndCopy(parsedURL, false)
+        } else {
+            ListenAndCopy(parsedURL, true)
+        }
     default:
         log.Fatalf("[ERRO-4] %v", "URL Flag Unprovided")
     }

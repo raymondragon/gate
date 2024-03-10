@@ -49,9 +49,9 @@ func main() {
             aURL.Fragment = "IPlist"
         }
         tURL.Fragment = aURL.Fragment
-        log.Printf("[INFO-0] %v://%v:%v/%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
+        log.Printf("[INFO-0] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
         go ListenAndAuth(aURL)
-        log.Printf("[INFO-1] %v://%v:%v <-> %v [AUTH] ON", tURL.Scheme, tURL.Hostname, tURL.Port, tURL.Path)
+        log.Printf("[INFO-1] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
         ListenAndCopy(tURL, true)
         select {}
     case *authURL != "" && *tranURL == "":
@@ -59,7 +59,7 @@ func main() {
         if err != nil {
             log.Fatalf("[ERRO-2] %v", err)
         }
-        log.Printf("[INFO-2] %v://%v:%v/%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
+        log.Printf("[INFO-2] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
         ListenAndAuth(aURL)
     case *authURL == "" && *tranURL != "":
         tURL, err := urlParse(*tranURL)
@@ -67,10 +67,10 @@ func main() {
             log.Fatalf("[ERRO-3] %v", err)
         }
         if tURL.Fragment == "" {
-            log.Printf("[INFO-3] %v://%v:%v <-> %v [AUTH] OFF", tURL.Scheme, tURL.Hostname, tURL.Port, tURL.Path)
+            log.Printf("[INFO-3] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
             ListenAndCopy(tURL, false)
         } else {
-            log.Printf("[INFO-4] %v://%v:%v <-> %v [FILE] %v", tURL.Scheme, tURL.Hostname, tURL.Port, tURL.Path, tURL.Fragment)
+            log.Printf("[INFO-4] %v://%v:%v <-> %v [FILE] %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"), tURL.Fragment)
             ListenAndCopy(tURL, true)
         }
     default:

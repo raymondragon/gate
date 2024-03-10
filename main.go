@@ -109,13 +109,13 @@ func ListenAndAuth(parsedURL ParsedURL) {
         if err != nil {
             log.Fatalf("[ERRO-6] %v", err)
         }
-        server := &http.Server{
-            Addr: parsedURL.Hostname + ":" + parsedURL.Port,
+        serv := &http.Server{
+            Addr:      parsedURL.Hostname + ":" + parsedURL.Port,
             TLSConfig: &tls.Config{
                 Certificates: []tls.Certificate{cert},
             },
         }
-        if err := server.ListenAndServeTLS("", ""); err != nil {
+        if err := serv.ListenAndServeTLS("", ""); err != nil {
             log.Fatalf("[ERRO-7] %v", err)
         }
     default:

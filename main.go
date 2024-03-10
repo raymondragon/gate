@@ -21,7 +21,7 @@ import (
 )
 
 var (
-    authURL = flag.String("A", "", "Authorization: http(s)://local:port/secret_path")
+    authURL = flag.String("A", "", "Authorization: http(s)://local:port/path#iplist")
     tranURL = flag.String("T", "", "Transmission: tcp(udp)://local:port/remote:port")
 )
 
@@ -30,6 +30,7 @@ type ParsedURL struct {
     Hostname string
     Port     string
     Path     string
+    Fragment string
 }
 
 func main() {
@@ -44,6 +45,10 @@ func main() {
         if err != nil {
             log.Fatalf("[ERRO-1] %v", err)
         }
+        if authedURL.Fragment == "" {
+            authedURL.Fragment = "IPlist"
+        }
+        tranedURL.Fragment = authedURL.Fragment
         log.Printf("[INFO-0] %v", *authURL)
         go ListenAndAuth(authedURL)
         log.Printf("[INFO-1] %v", *tranURL)
@@ -80,13 +85,13 @@ func ListenAndAuth(parsedURL ParsedURL) {
             http.Error(w, "[WARN-1]", 500)
             return
         }
-        file, err := os.OpenFile("IPlist", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+        file, err := os.OpenFile(parsedURL.Fragment, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
         if err != nil {
             log.Printf("[WARN-2] %v", err)
             return
         }
         defer file.Close()
-        if inIPlist(clientIP, "IPlist") {
+        if inIPlist(clientIP, parsedURL.Fragment) {
             return
         }
         if _, err := file.WriteString(clientIP + "\n"); err != nil {
@@ -139,7 +144,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
             go func(localConn net.Conn) {
                 defer localConn.Close()
                 clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
-                if authEnabled && !inIPlist(clientIP, "IPlist") {
+                if authEnabled && !inIPlist(clientIP, parsedURL.Fragment) {
                     log.Printf("[WARN-5] %v", clientIP)
                     return
                 }
@@ -170,7 +175,7 @@ func ListenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                 continue
             }
             clientIP := clientAddr.IP.String()
-            if authEnabled && !inIPlist(clientIP, "IPlist") {
+            if authEnabled && !inIPlist(clientIP, parsedURL.Fragment) {
                 log.Printf("[WARN-7] %v", clientIP)
                 continue
             }
@@ -197,6 +202,7 @@ func urlParse(rawURL string) (ParsedURL, error) {
         Hostname: u.Hostname(),
         Port:     u.Port(),
         Path:     u.Path,
+        Fragment: u.Fragment,
     }, nil
 }
 

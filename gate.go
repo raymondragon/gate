@@ -5,6 +5,7 @@ import (
     "log"
     "net"
     "net/http"
+    "os"
     "strings"
 
     "github.com/raymondragon/golib"
@@ -12,13 +13,14 @@ import (
 
 var (
     authURL = flag.String("A", "", "Authorization: http(s)://local:port/secret_path#ipfile")
-    tranURL = flag.String("T", "", "Transmission: tcp(udp)://local:port/remote:port#ipfile")
+    tranURL = flag.String("T", "", "Transmission: tcp(tls)://local:port/remote:port#ipfile")
 )
 
 func main() {
     flag.Parse()
     if *authURL == "" && *tranURL == "" {
         flag.Usage()
+        os.Exit(1)
     }
     ipFile := "IPlist"
     if *authURL != "" {

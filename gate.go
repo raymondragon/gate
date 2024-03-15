@@ -12,8 +12,8 @@ import (
 )
 
 var (
-    authURL = flag.String("A", "", "Authorization: http(s)://local:port/secret_path#ipfile")
-    tranURL = flag.String("T", "", "Transmission:      tcp://local:port/remote:port#ipfile")
+    authURL = flag.String("A", "", "Authorization: http://local:port/secret_path#file")
+    tranURL = flag.String("T", "", "Transmission:   tcp://local:port/remote:port#file")
 )
 
 func main() {
@@ -22,16 +22,16 @@ func main() {
         flag.Usage()
         os.Exit(1)
     }
-    ipFile := "IPlist"
+    defaultFile := "IPlist"
     if *authURL != "" {
         aURL, err := golib.URLParse(*authURL)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
         if aURL.Fragment == "" {
-            aURL.Fragment = ipFile
+            aURL.Fragment = defaultFile
         } else {
-            ipFile = aURL.Fragment
+            defaultFile = aURL.Fragment
         }
         log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
         go listenAndAuth(aURL)
@@ -43,7 +43,7 @@ func main() {
         }
         log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
         if *authURL != "" {
-            tURL.Fragment = ipFile
+            tURL.Fragment = defaultFile
         }
         listenAndCopy(tURL, tURL.Fragment != "")
     }
@@ -59,19 +59,6 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
     case "http":
         log.Printf("[INFO] %v", *authURL)
         if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-    case "https":
-        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Hostname)
-        if err != nil {
-            log.Printf("[WARN] %v", err)
-            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
-            if err != nil {
-                log.Printf("[WARN] %v", err)
-            }
-        }
-        log.Printf("[INFO] %v", *authURL)
-        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, tlsConfig); err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
     default:

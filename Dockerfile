@@ -3,7 +3,7 @@ WORKDIR /root
 ADD . .
 RUN go mod init gate && go mod tidy
 RUN env CGO_ENABLED=0 go build -v -ldflags '-w -s'
-FROM scratch
-WORKDIR /
+FROM alpine:latest
+WORKDIR /root
 COPY --from=builder /root/gate .
-ENTRYPOINT ["/gate"]
+ENTRYPOINT ["/root/gate"]

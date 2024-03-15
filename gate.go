@@ -18,7 +18,7 @@ var (
 func main() {
     flag.Parse()
     if *authURL == "" && *tranURL == "" {
-        log.Fatalf("[ERRO] %v", "URL Flag Unprovided")
+        flag.Usage()
     }
     ipFile := "IPlist"
     if *authURL != "" {
@@ -48,7 +48,7 @@ func main() {
     select {}
 }
 
-func listenAndAuth(parsedURL ParsedURL) {
+func listenAndAuth(parsedURL golib.ParsedURL) {
     http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
@@ -77,7 +77,7 @@ func listenAndAuth(parsedURL ParsedURL) {
     }
 }
 
-func listenAndCopy(parsedURL ParsedURL, authEnabled bool) {
+func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
         log.Fatalf("[ERRO] %v", err)

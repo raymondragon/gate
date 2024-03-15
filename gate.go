@@ -41,7 +41,7 @@ func main() {
         }
         log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
         if *authURL != "" {
-            tURL.Fragment = aURL.Fragment
+            tURL.Fragment = ipFile
         }
         authEnabled := tURL.Fragment != ""
         listenAndCopy(tURL, authEnabled)

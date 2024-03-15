@@ -20,10 +20,16 @@ func main() {
     if *authURL == "" && *tranURL == "" {
         log.Fatalf("[ERRO] %v", "URL Flag Unprovided")
     }
+    ipFile := "IPlist"
     if *authURL != "" {
         aURL, err := golib.URLParse(*authURL)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
+        }
+        if aURL.Fragment == "" {
+            aURL.Fragment = ipFile
+        } else {
+            ipFile = aURL.Fragment
         }
         log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
         go listenAndAuth(aURL)
@@ -34,6 +40,9 @@ func main() {
             log.Fatalf("[ERRO] %v", err)
         }
         log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
+        if *authURL != "" {
+            tURL.Fragment = aURL.Fragment
+        }
         authEnabled := tURL.Fragment != ""
         listenAndCopy(tURL, authEnabled)
     }

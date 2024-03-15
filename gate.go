@@ -1,6 +1,7 @@
 package main
 
 import (
+    "crypto/tls"
     "flag"
     "log"
     "net"
@@ -23,6 +24,7 @@ func main() {
         os.Exit(1)
     }
     ipFile := "IPlist"
+    sharedTLSConfig := &tls.Config{}
     if *authURL != "" {
         aURL, err := golib.URLParse(*authURL)
         if err != nil {
@@ -34,7 +36,7 @@ func main() {
             ipFile = aURL.Fragment
         }
         log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
-        go listenAndAuth(aURL)
+        go listenAndAuth(aURL, sharedTLSConfig)
     }
     if *tranURL != "" {
         tURL, err := golib.URLParse(*tranURL)
@@ -45,12 +47,12 @@ func main() {
         if *authURL != "" {
             tURL.Fragment = ipFile
         }
-        listenAndCopy(tURL, tURL.Fragment != "")
+        listenAndCopy(tURL, tURL.Fragment != "", sharedTLSConfig)
     }
     select {}
 }
 
-func listenAndAuth(parsedURL golib.ParsedURL) {
+func listenAndAuth(parsedURL golib.ParsedURL, sharedTLSConfig *tls.Config) {
     http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
@@ -70,6 +72,7 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
                 log.Printf("[WARN] %v", err)
             }
         }
+        sharedTLSConfig = tlsConfig
         log.Printf("[INFO] %v", *authURL)
         if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, tlsConfig); err != nil {
             log.Fatalf("[ERRO] %v", err)
@@ -79,7 +82,7 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
     }
 }
 
-func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool) {
+func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool, tlsConfig *tls.Config) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
         log.Fatalf("[ERRO] %v", err)
@@ -87,6 +90,20 @@ func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool) {
     switch parsedURL.Scheme {
     case "tcp":
         listener, err := net.ListenTCP("tcp", localAddr)
+        if err != nil {
+            log.Fatalf("[ERRO] %v", err)
+        }
+        defer listener.Close()
+        for {
+            localConn, err := listener.Accept()
+            if err != nil {
+                log.Printf("[WARN] %v", err)
+                continue
+            }
+            go golib.HandleConn(localConn, authEnabled, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
+        }
+    case "tls":
+        listener, err := tls.Listen("tcp", localAddr.String(), tlsConfig)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }

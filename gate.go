@@ -35,6 +35,7 @@ func main() {
         } else {
             ipFile = aURL.Fragment
         }
+        sharedTLSConfig = newTLSConfig(aURL.Hostname)
         log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
         go listenAndAuth(aURL, sharedTLSConfig)
     }
@@ -46,6 +47,9 @@ func main() {
         log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
         if *authURL != "" {
             tURL.Fragment = ipFile
+        }
+        if sharedTLSConfig == nil {
+            sharedTLSConfig = newTLSConfig(tURL.Hostname)
         }
         listenAndCopy(tURL, tURL.Fragment != "", sharedTLSConfig)
     }
@@ -64,17 +68,8 @@ func listenAndAuth(parsedURL golib.ParsedURL, sharedTLSConfig *tls.Config) {
             log.Fatalf("[ERRO] %v", err)
         }
     case "https":
-        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Hostname)
-        if err != nil {
-            log.Printf("[WARN] %v", err)
-            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
-            if err != nil {
-                log.Printf("[WARN] %v", err)
-            }
-        }
-        sharedTLSConfig = tlsConfig
         log.Printf("[INFO] %v", *authURL)
-        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, tlsConfig); err != nil {
+        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, sharedTLSConfig); err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
     default:
@@ -119,4 +114,16 @@ func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool, sharedTLSConfig 
     default:
         log.Fatalf("[ERRO] %v", parsedURL.Scheme)
     }
+}
+
+func newTLSConfig(hostname string) *tls.Config {
+    tlsConfig, err := golib.TLSConfigApplication(hostname)
+    if err != nil {
+        log.Printf("[WARN] %v", err)
+        tlsConfig, err = golib.TLSConfigGeneration(hostname)
+        if err != nil {
+            log.Printf("[WARN] %v", err)
+        }
+    }
+    return tlsConfig
 }

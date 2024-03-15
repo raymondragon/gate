@@ -92,12 +92,12 @@ func listenAndAuth(parsedURL ParsedURL) {
 }
 
 func listenAndCopy(parsedURL ParsedURL, authEnabled bool) {
+    localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
+    if err != nil {
+        log.Fatalf("[ERRO] %v", err)
+    }
     switch parsedURL.Scheme {
     case "tcp":
-        localAddr, err := net.ResolveTCPAddr("tcp", parsedURL.Hostname+":"+parsedURL.Port)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
         listener, err := net.ListenTCP("tcp", localAddr)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
@@ -124,36 +124,6 @@ func listenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                 go io.Copy(remoteConn, localConn)
                 io.Copy(localConn, remoteConn)
             }(localConn)
-        }
-    case "udp":
-        localAddr, err := net.ResolveUDPAddr("udp", parsedURL.Hostname+":"+parsedURL.Port)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-        conn, err := net.ListenUDP("udp", localAddr)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-        defer conn.Close()
-        for {
-            buf := make([]byte, 1024)
-            n, clientAddr, err := conn.ReadFromUDP(buf)
-            if err != nil {
-                log.Printf("[WARN] %v", err)
-                continue
-            }
-            clientIP := clientAddr.IP.String()
-            if authEnabled && !golib.IsInFile(clientIP, parsedURL.Fragment) {
-                log.Printf("[WARN] %v", clientIP)
-                continue
-            }
-            remoteAddr, err := net.ResolveUDPAddr("udp", strings.TrimPrefix(parsedURL.Path, "/"))
-            if err != nil {
-                log.Fatalf("[ERRO] %v", err)
-            }
-            if _, err := conn.WriteToUDP(buf[:n], remoteAddr); err != nil {
-                log.Printf("[WARN] %v", err)
-            }
         }
     default:
         log.Fatalf("[ERRO] %v", parsedURL.Scheme)

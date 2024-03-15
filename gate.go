@@ -2,11 +2,9 @@ package main
 
 import (
     "flag"
-    "io"
     "log"
     "net"
     "net/http"
-    "os"
     "strings"
 
     "github.com/raymondragon/golib"
@@ -109,21 +107,7 @@ func listenAndCopy(parsedURL ParsedURL, authEnabled bool) {
                 log.Printf("[WARN] %v", err)
                 continue
             }
-            go func(localConn net.Conn) {
-                defer localConn.Close()
-                clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
-                if authEnabled && !golib.IsInFile(clientIP, parsedURL.Fragment) {
-                    log.Printf("[WARN] %v", clientIP)
-                    return
-                }
-                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
-                if err != nil {
-                    log.Fatalf("[ERRO] %v", err)
-                }
-                defer remoteConn.Close()
-                go io.Copy(remoteConn, localConn)
-                io.Copy(localConn, remoteConn)
-            }(localConn)
+            go golib.HandleConn(localConn, authEnabled, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
         }
     default:
         log.Fatalf("[ERRO] %v", parsedURL.Scheme)

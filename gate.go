@@ -82,7 +82,7 @@ func listenAndAuth(parsedURL golib.ParsedURL, sharedTLSConfig *tls.Config) {
     }
 }
 
-func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool, tlsConfig *tls.Config) {
+func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool, sharedTLSConfig *tls.Config) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
         log.Fatalf("[ERRO] %v", err)
@@ -103,7 +103,7 @@ func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool, tlsConfig *tls.C
             go golib.HandleConn(localConn, authEnabled, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
         }
     case "tls":
-        listener, err := tls.Listen("tcp", localAddr.String(), tlsConfig)
+        listener, err := tls.Listen("tcp", localAddr.String(), sharedTLSConfig)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }

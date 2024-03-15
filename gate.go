@@ -17,47 +17,27 @@ var (
 
 func main() {
     flag.Parse()
-    switch {
-    case *authURL != "" && *tranURL != "":
-        aURL, err := urlParse(*authURL)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-        tURL, err := urlParse(*tranURL)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-        if aURL.Fragment == "" {
-            aURL.Fragment = "IPlist"
-        }
-        tURL.Fragment = aURL.Fragment
-        log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
-        go listenAndAuth(aURL)
-        log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
-        listenAndCopy(tURL, true)
-        select {}
-    case *authURL != "" && *tranURL == "":
-        aURL, err := urlParse(*authURL)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-        log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
-        listenAndAuth(aURL)
-    case *authURL == "" && *tranURL != "":
-        tURL, err := urlParse(*tranURL)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-        if tURL.Fragment == "" {
-            log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
-            listenAndCopy(tURL, false)
-        } else {
-            log.Printf("[INFO] %v://%v:%v <-> %v [FILE] %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"), tURL.Fragment)
-            listenAndCopy(tURL, true)
-        }
-    default:
+    if *authURL == "" && *tranURL == "" {
         log.Fatalf("[ERRO] %v", "URL Flag Unprovided")
     }
+    if *authURL != "" {
+        aURL, err := golib.URLParse(*authURL)
+        if err != nil {
+            log.Fatalf("[ERRO] %v", err)
+        }
+        log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
+        go listenAndAuth(aURL)
+    }
+    if *tranURL != "" {
+        tURL, err := golib.URLParse(*tranURL)
+        if err != nil {
+            log.Fatalf("[ERRO] %v", err)
+        }
+        log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
+        authEnabled := tURL.Fragment != ""
+        listenAndCopy(tURL, authEnabled)
+    }
+    select {}
 }
 
 func listenAndAuth(parsedURL ParsedURL) {

@@ -1,7 +1,6 @@
 package main
 
 import (
-    "crypto/tls"
     "flag"
     "log"
     "net"
@@ -14,7 +13,7 @@ import (
 
 var (
     authURL = flag.String("A", "", "Authorization: http(s)://local:port/secret_path#ipfile")
-    tranURL = flag.String("T", "", "Transmission: tcp(tls)://local:port/remote:port#ipfile")
+    tranURL = flag.String("T", "", "Transmission:      tcp://local:port/remote:port#ipfile")
 )
 
 func main() {
@@ -24,7 +23,6 @@ func main() {
         os.Exit(1)
     }
     ipFile := "IPlist"
-    sharedTLSConfig := &tls.Config{}
     if *authURL != "" {
         aURL, err := golib.URLParse(*authURL)
         if err != nil {
@@ -35,9 +33,8 @@ func main() {
         } else {
             ipFile = aURL.Fragment
         }
-        sharedTLSConfig = newTLSConfig(aURL.Hostname)
         log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
-        go listenAndAuth(aURL, sharedTLSConfig)
+        go listenAndAuth(aURL)
     }
     if *tranURL != "" {
         tURL, err := golib.URLParse(*tranURL)
@@ -48,15 +45,12 @@ func main() {
         if *authURL != "" {
             tURL.Fragment = ipFile
         }
-        if sharedTLSConfig == nil {
-            sharedTLSConfig = newTLSConfig(tURL.Hostname)
-        }
-        listenAndCopy(tURL, tURL.Fragment != "", sharedTLSConfig)
+        listenAndCopy(tURL, tURL.Fragment != "")
     }
     select {}
 }
 
-func listenAndAuth(parsedURL golib.ParsedURL, sharedTLSConfig *tls.Config) {
+func listenAndAuth(parsedURL golib.ParsedURL) {
     http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
@@ -68,8 +62,16 @@ func listenAndAuth(parsedURL golib.ParsedURL, sharedTLSConfig *tls.Config) {
             log.Fatalf("[ERRO] %v", err)
         }
     case "https":
+        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Hostname)
+        if err != nil {
+            log.Printf("[WARN] %v", err)
+            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
+            if err != nil {
+                log.Printf("[WARN] %v", err)
+            }
+        }
         log.Printf("[INFO] %v", *authURL)
-        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, sharedTLSConfig); err != nil {
+        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, tlsConfig); err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
     default:
@@ -77,7 +79,7 @@ func listenAndAuth(parsedURL golib.ParsedURL, sharedTLSConfig *tls.Config) {
     }
 }
 
-func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool, sharedTLSConfig *tls.Config) {
+func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
         log.Fatalf("[ERRO] %v", err)
@@ -97,33 +99,7 @@ func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool, sharedTLSConfig 
             }
             go golib.HandleConn(localConn, authEnabled, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
         }
-    case "tls":
-        listener, err := tls.Listen("tcp", localAddr.String(), sharedTLSConfig)
-        if err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-        defer listener.Close()
-        for {
-            localConn, err := listener.Accept()
-            if err != nil {
-                log.Printf("[WARN] %v", err)
-                continue
-            }
-            go golib.HandleConn(localConn, authEnabled, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
-        }
     default:
         log.Fatalf("[ERRO] %v", parsedURL.Scheme)
     }
-}
-
-func newTLSConfig(hostname string) *tls.Config {
-    tlsConfig, err := golib.TLSConfigApplication(hostname)
-    if err != nil {
-        log.Printf("[WARN] %v", err)
-        tlsConfig, err = golib.TLSConfigGeneration(hostname)
-        if err != nil {
-            log.Printf("[WARN] %v", err)
-        }
-    }
-    return tlsConfig
 }

@@ -43,8 +43,7 @@ func main() {
         if *authURL != "" {
             tURL.Fragment = ipFile
         }
-        authEnabled := tURL.Fragment != ""
-        listenAndCopy(tURL, authEnabled)
+        listenAndCopy(tURL, tURL.Fragment != "")
     }
     select {}
 }

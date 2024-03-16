@@ -57,7 +57,6 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
     })
     switch parsedURL.Scheme {
     case "http":
-        log.Printf("[INFO] %v", *authURL)
         if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
             log.Fatalf("[ERRO] %v", err)
         }

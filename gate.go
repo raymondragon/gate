@@ -32,7 +32,7 @@ func main() {
         } else {
             defaultFile = aURL.Fragment
         }
-        log.Printf("[INFO] %v://%v:%v%v <-> [FILE] %v", aURL.Scheme, aURL.Hostname, aURL.Port, aURL.Path, aURL.Fragment)
+        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*authURL, "#")[0], aURL.Fragment)
         go listenAndAuth(aURL)
     }
     if *tranURL != "" {

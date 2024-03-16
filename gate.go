@@ -28,8 +28,7 @@ func main() {
             log.Fatalf("[ERRO] %v", err)
         }
         if parsedAURL.Fragment == "" {
-            defaultFile = "IPlist"
-            parsedAURL.Fragment = defaultFile
+            parsedAURL.Fragment, defaultFile = "IPlist", "IPlist"
         } else {
             defaultFile = parsedAURL.Fragment
         }

@@ -23,28 +23,28 @@ func main() {
     }
     defaultFile := "IPlist"
     if *authURL != "" {
-        aURL, err := golib.URLParse(*authURL)
+        parsedAURL, err := golib.URLParse(*authURL)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
-        if aURL.Fragment == "" {
-            aURL.Fragment = defaultFile
+        if parsedAURL.Fragment == "" {
+            parsedAURL.Fragment = defaultFile
         } else {
-            defaultFile = aURL.Fragment
+            defaultFile = parsedAURL.Fragment
         }
-        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*authURL, "#")[0], aURL.Fragment)
-        go listenAndAuth(aURL)
+        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*authURL, "#")[0], parsedAURL.Fragment)
+        go listenAndAuth(parsedAURL)
     }
     if *tranURL != "" {
-        tURL, err := golib.URLParse(*tranURL)
+        parsedTURL, err := golib.URLParse(*tranURL)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
         if *authURL != "" {
-            tURL.Fragment = defaultFile
+            parsedTURL.Fragment = defaultFile
         }
-        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*tranURL, "#")[0], tURL.Fragment)
-        listenAndCopy(tURL, tURL.Fragment != "")
+        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*tranURL, "#")[0], parsedTURL.Fragment)
+        listenAndCopy(parsedTURL)
     }
     select {}
 }
@@ -64,7 +64,7 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
     }
 }
 
-func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool) {
+func listenAndCopy(parsedURL golib.ParsedURL) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
         log.Fatalf("[ERRO] %v", err)
@@ -82,7 +82,7 @@ func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool) {
                 log.Printf("[WARN] %v", err)
                 continue
             }
-            go golib.HandleConn(localConn, authEnabled, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
+            go golib.HandleConn(localConn, parsedURL.Fragment != "", parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
         }
     default:
         log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)

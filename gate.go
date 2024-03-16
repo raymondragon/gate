@@ -25,7 +25,7 @@ func main() {
     if *rawAURL != "" {
         parsedAURL, err := golib.URLParse(*rawAURL)
         if err != nil {
-            log.Fatalf("[ERRO] %v", err)
+            log.Printf("[WARN] %v", err)
         }
         if parsedAURL.Fragment == "" {
             parsedAURL.Fragment, defaultFile = "IPlist", "IPlist"
@@ -38,7 +38,7 @@ func main() {
     if *rawTURL != "" {
         parsedTURL, err := golib.URLParse(*rawTURL)
         if err != nil {
-            log.Fatalf("[ERRO] %v", err)
+            log.Printf("[WARN] %v", err)
         }
         if defaultFile != "" {
             parsedTURL.Fragment = defaultFile
@@ -67,7 +67,7 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
 func listenAndConn(parsedURL golib.ParsedURL) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
-        log.Fatalf("[ERRO] %v", err)
+        log.Printf("[WARN] %v", err)
     }
     switch parsedURL.Scheme {
     case "tcp":

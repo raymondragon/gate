@@ -11,19 +11,19 @@ import (
 )
 
 var (
-    authURL = flag.String("A", "", "Authorization: http://local:port/secret_path#file")
-    tranURL = flag.String("T", "", "Transmission:   tcp://local:port/remote:port#file")
+    rawAURL = flag.String("A", "", "Authorization: http://local:port/secret_path#file")
+    rawTURL = flag.String("T", "", "Transmission:   tcp://local:port/remote:port#file")
 )
 
 func main() {
     flag.Parse()
-    if *authURL == "" && *tranURL == "" {
+    if *rawAURL == "" && *tranURL == "" {
         flag.Usage()
-        log.Fatal("[ERRO] Invalid Flag(s)")
+        log.Fatalf("[ERRO] %v", "Invalid Flag(s)")
     }
     defaultFile := "IPlist"
-    if *authURL != "" {
-        parsedAURL, err := golib.URLParse(*authURL)
+    if *rawAURL != "" {
+        parsedAURL, err := golib.URLParse(*rawAURL)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
@@ -32,18 +32,18 @@ func main() {
         } else {
             defaultFile = parsedAURL.Fragment
         }
-        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*authURL, "#")[0], parsedAURL.Fragment)
+        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawAURL, "#")[0], parsedAURL.Fragment)
         go listenAndAuth(parsedAURL)
     }
-    if *tranURL != "" {
-        parsedTURL, err := golib.URLParse(*tranURL)
+    if *rawTURL != "" {
+        parsedTURL, err := golib.URLParse(*rawTURL)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
-        if *authURL != "" {
+        if *rawAURL != "" {
             parsedTURL.Fragment = defaultFile
         }
-        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*tranURL, "#")[0], parsedTURL.Fragment)
+        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawTURL, "#")[0], parsedTURL.Fragment)
         listenAndCopy(parsedTURL)
     }
     select {}
@@ -64,7 +64,7 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
     }
 }
 
-func listenAndCopy(parsedURL golib.ParsedURL) {
+func listenAndConn(parsedURL golib.ParsedURL) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
         log.Fatalf("[ERRO] %v", err)
@@ -82,7 +82,7 @@ func listenAndCopy(parsedURL golib.ParsedURL) {
                 log.Printf("[WARN] %v", err)
                 continue
             }
-            go golib.HandleConn(localConn, parsedURL.Fragment != "", parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
+            go golib.HandleConn(localConn, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
         }
     default:
         log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)

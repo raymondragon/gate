@@ -19,7 +19,7 @@ func main() {
     flag.Parse()
     if *authURL == "" && *tranURL == "" {
         flag.Usage()
-        log.Fatalf("[ERRO] %v", "Flag(s) Missing")
+        log.Fatalf("[ERRO] %v", "Missing Flag(s)")
     }
     defaultFile := "IPlist"
     if *authURL != "" {
@@ -60,7 +60,7 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
             log.Fatalf("[ERRO] %v", err)
         }
     default:
-        log.Fatalf("[ERRO] %v", parsedURL.Scheme)
+        log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)
     }
 }
 
@@ -85,6 +85,6 @@ func listenAndCopy(parsedURL golib.ParsedURL, authEnabled bool) {
             go golib.HandleConn(localConn, authEnabled, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
         }
     default:
-        log.Fatalf("[ERRO] %v", parsedURL.Scheme)
+        log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)
     }
 }

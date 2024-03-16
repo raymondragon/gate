@@ -19,7 +19,7 @@ func main() {
     flag.Parse()
     if *authURL == "" && *tranURL == "" {
         flag.Usage()
-        log.Fatalf("[ERRO] %v", "Missing Flag(s)")
+        log.Fatal("[ERRO] Invalid Flag(s)")
     }
     defaultFile := "IPlist"
     if *authURL != "" {

@@ -5,7 +5,6 @@ import (
     "log"
     "net"
     "net/http"
-    "os"
     "strings"
 
     "github.com/raymondragon/golib"
@@ -20,7 +19,7 @@ func main() {
     flag.Parse()
     if *authURL == "" && *tranURL == "" {
         flag.Usage()
-        os.Exit(1)
+        log.Fatalf("[ERRO] %v", "Flag(s) Missing")
     }
     defaultFile := "IPlist"
     if *authURL != "" {
@@ -41,10 +40,10 @@ func main() {
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
-        log.Printf("[INFO] %v://%v:%v <-> %v", tURL.Scheme, tURL.Hostname, tURL.Port, strings.TrimPrefix(tURL.Path, "/"))
         if *authURL != "" {
             tURL.Fragment = defaultFile
         }
+        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*tranURL, "#")[0], tURL.Fragment)
         listenAndCopy(tURL, tURL.Fragment != "")
     }
     select {}

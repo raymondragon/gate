@@ -21,13 +21,14 @@ func main() {
         flag.Usage()
         log.Fatalf("[ERRO] %v", "Invalid Flag(s)")
     }
-    defaultFile := "IPlist"
+    defaultFile := ""
     if *rawAURL != "" {
         parsedAURL, err := golib.URLParse(*rawAURL)
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
         if parsedAURL.Fragment == "" {
+            defaultFile = "IPlist"
             parsedAURL.Fragment = defaultFile
         } else {
             defaultFile = parsedAURL.Fragment
@@ -40,7 +41,7 @@ func main() {
         if err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
-        if *rawAURL != "" {
+        if defaultFile != "" {
             parsedTURL.Fragment = defaultFile
         }
         log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawTURL, "#")[0], parsedTURL.Fragment)

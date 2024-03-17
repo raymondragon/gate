@@ -2,6 +2,7 @@ package main
 
 import (
     "flag"
+    "io"
     "log"
     "net"
     "net/http"
@@ -82,7 +83,22 @@ func listenAndConn(parsedURL golib.ParsedURL) {
                 log.Printf("[WARN] %v", err)
                 continue
             }
-            go golib.HandleConn(localConn, parsedURL.Fragment, strings.TrimPrefix(parsedURL.Path, "/"))
+            go func(localConn, net.Conn) {
+                defer localConn.Close()
+                clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
+                if parsedURL.Fragment != "" && !golib.IsInFile(clientIP, parsedURL.Fragment) {
+                    log.Printf("[WARN] %v", clientIP)
+                    return
+                }
+                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
+                if err != nil {
+                    log.Printf("[WARN] %v", err)
+                    return
+                }
+                defer remoteConn.Close()
+                go io.Copy(remoteConn, localConn)
+                io.Copy(localConn, remoteConn)
+            }(localConn)
         }
     default:
         log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)

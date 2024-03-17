@@ -55,13 +55,8 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
     })
-    switch parsedURL.Scheme {
-    case "http":
-        if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
-            log.Fatalf("[ERRO] %v", err)
-        }
-    default:
-        log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)
+    if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
+        log.Fatalf("[ERRO] %v", err)
     }
 }
 
@@ -70,37 +65,32 @@ func listenAndConn(parsedURL golib.ParsedURL) {
     if err != nil {
         log.Printf("[WARN] %v", err)
     }
-    switch parsedURL.Scheme {
-    case "tcp":
-        listener, err := net.ListenTCP("tcp", localAddr)
+    listener, err := net.ListenTCP("tcp", localAddr)
+    if err != nil {
+        log.Fatalf("[ERRO] %v", err)
+    }
+    defer listener.Close()
+    for {
+        localConn, err := listener.Accept()
         if err != nil {
-            log.Fatalf("[ERRO] %v", err)
+            log.Printf("[WARN] %v", err)
+            continue
         }
-        defer listener.Close()
-        for {
-            localConn, err := listener.Accept()
+        go func(localConn, net.Conn) {
+            defer localConn.Close()
+            clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
+            if parsedURL.Fragment != "" && !golib.IsInFile(clientIP, parsedURL.Fragment) {
+                log.Printf("[WARN] %v", clientIP)
+                return
+            }
+            remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
             if err != nil {
                 log.Printf("[WARN] %v", err)
-                continue
+                return
             }
-            go func(localConn, net.Conn) {
-                defer localConn.Close()
-                clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
-                if parsedURL.Fragment != "" && !golib.IsInFile(clientIP, parsedURL.Fragment) {
-                    log.Printf("[WARN] %v", clientIP)
-                    return
-                }
-                remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
-                if err != nil {
-                    log.Printf("[WARN] %v", err)
-                    return
-                }
-                defer remoteConn.Close()
-                go io.Copy(remoteConn, localConn)
-                io.Copy(localConn, remoteConn)
-            }(localConn)
-        }
-    default:
-        log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)
+            defer remoteConn.Close()
+            go io.Copy(remoteConn, localConn)
+            io.Copy(localConn, remoteConn)
+        }(localConn)
     }
 }

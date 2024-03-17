@@ -12,8 +12,8 @@ import (
 )
 
 var (
-    rawAURL = flag.String("A", "", "Authorization: http://local:port/secret_path#file")
-    rawTURL = flag.String("T", "", "Transmission:   tcp://local:port/remote:port#file")
+    rawAURL = flag.String("A", "", "Authorization://local:port/secret_path#file")
+    rawTURL = flag.String("T", "", "Transmissions://local:port/remote:port#file")
 )
 
 func main() {

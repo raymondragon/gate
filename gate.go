@@ -51,7 +51,7 @@ func main() {
 }
 
 func handleAuthorization(parsedURL golib.ParsedURL) {
-    http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc("/" + parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
     })

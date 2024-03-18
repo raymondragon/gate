@@ -18,7 +18,7 @@ var (
 
 func main() {
     flag.Parse()
-    if *rawAURL == "" && *tranURL == "" {
+    if *rawAURL == "" && *rawTURL == "" {
         flag.Usage()
         log.Fatalf("[ERRO] %v", "Invalid Flag(s)")
     }
@@ -45,7 +45,7 @@ func main() {
             parsedTURL.Fragment = defaultFile
         }
         log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawTURL, "#")[0], parsedTURL.Fragment)
-        listenAndCopy(parsedTURL)
+        listenAndConn(parsedTURL)
     }
     select {}
 }

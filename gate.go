@@ -76,7 +76,7 @@ func listenAndConn(parsedURL golib.ParsedURL) {
             log.Printf("[WARN] %v", err)
             continue
         }
-        go func(localConn, net.Conn) {
+        go func(localConn net.Conn) {
             defer localConn.Close()
             clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
             if parsedURL.Fragment != "" && !golib.IsInFile(clientIP, parsedURL.Fragment) {

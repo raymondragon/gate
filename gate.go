@@ -34,7 +34,7 @@ func main() {
             defaultFile = parsedAURL.Fragment
         }
         log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawAURL, "#")[0], parsedAURL.Fragment)
-        go listenAndAuth(parsedAURL)
+        go handleAuthorization(parsedAURL)
     }
     if *rawTURL != "" {
         parsedTURL, err := golib.URLParse(*rawTURL)
@@ -45,12 +45,12 @@ func main() {
             parsedTURL.Fragment = defaultFile
         }
         log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawTURL, "#")[0], parsedTURL.Fragment)
-        listenAndConn(parsedTURL)
+        handleTransmissions(parsedTURL)
     }
     select {}
 }
 
-func listenAndAuth(parsedURL golib.ParsedURL) {
+func handleAuthorization(parsedURL golib.ParsedURL) {
     http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
@@ -60,7 +60,7 @@ func listenAndAuth(parsedURL golib.ParsedURL) {
     }
 }
 
-func listenAndConn(parsedURL golib.ParsedURL) {
+func handleTransmissions(parsedURL golib.ParsedURL) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
         log.Printf("[WARN] %v", err)

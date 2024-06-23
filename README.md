@@ -103,3 +103,7 @@ This project is licensed under the MIT License. See the LICENSE file for details
 ## Contact
 
 For issues and discussion, please open an issue on GitHub.
+
+## Sponsor
+
+This project was developed using the testing environment provided by [Alice Networks](https://alicenetworks.net).

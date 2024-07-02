@@ -1,23 +1,22 @@
 ## Overview
 GATE is a Golang-powered Authorization and/or Transmission Entry-point.
-This project provides a Go-based server application that handles authorization and transmission functionalities. It leverages the `golib` library for URL parsing, HTTP handling, and IP management.
+This project provides a Go-based server application that handles authorization and transmission functionalities.
 
 ## Features
 
-- **Authorization Handling**: Manages HTTP requests for IP display and recording.
+- **Authorization Handling**: Manages HTTP(S) requests for IP display and recording.
 - **Transmission Handling**: Facilitates TCP connections between a local and a remote address with IP-based access control.
 
 ## Requirements
 
 - Go 1.13 or later
-- `golib` library
 
 ## Installation
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/yourproject.git
-    cd yourproject
+    git clone https://github.com/raymondragon/gate.git
+    cd gate
     ```
 
 2. Install dependencies:
@@ -38,7 +37,7 @@ go run main.go -A "Authorization://local:port/secret_path#file" -T "Transmission
 
 ## Flags
 
-- `-A "http://local:port/secret_path#file"`
+- `-A "http(s)://local:port/secret_path#file"`
   - `local:port`: Local address and port for authorization handling.
   - `secret_path`: Path for handling authorization requests.
   - `file`: (Optional) File used for storing IP records. Defaults to "IPlist".
@@ -51,11 +50,11 @@ go run main.go -A "Authorization://local:port/secret_path#file" -T "Transmission
 ## Example
 
 ```sh
-go run main.go -A "http://:8080/auth" -T "tcp://:9000/127.0.0.1:9001"
+go run main.go -A "https://:8080/auth" -T "tcp://:9000/127.0.0.1:9001"
 ```
 
 In this example:
-- The server handles authorization on `:8080/auth` and stores IPs in `IPlist`.
+- The server handles authorization on `https://ip:8080/auth` and stores IPs in `IPlist`.
 - The server listens on `:9000` for TCP connections and forwards them to `127.0.0.1:9001`, checking IPs against `IPlist`.
 
 ## Docker or Podman Usage
@@ -83,8 +82,8 @@ podman run -d --name=gate-ssh --restart=always --net=host docker.io/raymd/gate -
 
 ### `handleAuthorization(parsedURL golib.ParsedURL)`
 
-- Sets up HTTP handlers for displaying and recording IPs.
-- Starts an HTTP server based on the provided URL.
+- Sets up HTTP(S) handlers for displaying and recording IPs.
+- Starts an HTTP(S) server based on the provided URL.
 
 ### `handleTransmissions(parsedURL golib.ParsedURL)`
 
@@ -94,7 +93,7 @@ podman run -d --name=gate-ssh --restart=always --net=host docker.io/raymd/gate -
 
 ## Dependencies
 
-- `golib`: Custom library for URL parsing, HTTP handling, and IP management.
+- `raymondragon/golib`: Custom library for URL parsing, HTTP handling, and IP management.
 
 ## License
 

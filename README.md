@@ -38,12 +38,12 @@ go run main.go -A "Authorization://local:port/secret_path#file" -T "Transmission
 
 ## Flags
 
-- `-A "Authorization://local:port/secret_path#file"`
+- `-A "http://local:port/secret_path#file"`
   - `local:port`: Local address and port for authorization handling.
   - `secret_path`: Path for handling authorization requests.
   - `file`: (Optional) File used for storing IP records. Defaults to "IPlist".
 
-- `-T "Transmissions://local:port/remote:port#file"`
+- `-T "tcp://local:port/remote:port#file"`
   - `local:port`: Local address and port for listening to TCP connections.
   - `remote:port`: Remote address and port to forward connections.
   - `file`: (Optional) File used for checking authorized IPs. Defaults to the file used in the authorization URL.
@@ -51,12 +51,12 @@ go run main.go -A "Authorization://local:port/secret_path#file" -T "Transmission
 ## Example
 
 ```sh
-go run main.go -A "Authorization://localhost:8080/auth#IPlist" -T "Transmissions://localhost:9000/remotehost:9001#IPlist"
+go run main.go -A "http://:8080/auth" -T "tcp://:9000/127.0.0.1:9001"
 ```
 
 In this example:
-- The server handles authorization on `localhost:8080/auth` and stores IPs in `IPlist`.
-- The server listens on `localhost:9000` for TCP connections and forwards them to `remotehost:9001`, checking IPs against `IPlist`.
+- The server handles authorization on `:8080/auth` and stores IPs in `IPlist`.
+- The server listens on `:9000` for TCP connections and forwards them to `127.0.0.1:9001`, checking IPs against `IPlist`.
 
 ## Code Structure
 

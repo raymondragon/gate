@@ -56,8 +56,25 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
     })
-    if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
-        log.Fatalf("[ERRO] %v", err)
+    switch parsedURL.Scheme {
+    case "http":
+        if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
+            log.Fatalf("[ERRO] %v", err)
+        }
+    case "https":
+        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Hostname)
+        if err != nil {
+            log.Printf("[WARN] %v", err)
+            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
+            if err != nil {
+                log.Printf("[WARN] %v", err)
+            }
+        }
+        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, tlsConfig); err != nil {
+            log.Fatalf("[ERRO] %v", err)
+        }
+    default:
+        log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)
     }
 }
 

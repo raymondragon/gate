@@ -58,6 +58,13 @@ In this example:
 - The server handles authorization on `:8080/auth` and stores IPs in `IPlist`.
 - The server listens on `:9000` for TCP connections and forwards them to `127.0.0.1:9001`, checking IPs against `IPlist`.
 
+## Docker or Podman Usage
+
+You can also run this project using Docker or Podman. Below is an example command:
+
+```sh
+podman run -d --name=gate-ssh --restart=always --net=host docker.io/raymd/gate -A=http://:80/secret_string -T=tcp://:22/127.0.0.1:2222
+
 ## Code Structure
 
 - **main.go**: Entry point of the application.

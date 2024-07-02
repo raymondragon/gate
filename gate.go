@@ -44,8 +44,10 @@ func main() {
         }
         if defaultFile != "" {
             parsedTURL.Fragment = defaultFile
+            log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawTURL, "#")[0], parsedTURL.Fragment)
+        } else {
+            log.Printf("[INFO] %v", strings.Split(*rawTURL, "#")[0])
         }
-        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawTURL, "#")[0], parsedTURL.Fragment)
         handleTransmissions(parsedTURL)
     }
     select {}

@@ -21,13 +21,13 @@ func main() {
     flag.Parse()
     if *rawAURL == "" && *rawTURL == "" {
         flag.Usage()
-        log.Fatalf("[ERRO] %v", "Invalid Flag(s)")
+        log.Fatalf("[ERRO] Invalid Flags")
     }
     defaultFile := ""
     if *rawAURL != "" {
         parsedAURL, err := golib.URLParse(*rawAURL)
         if err != nil {
-            log.Printf("[WARN] %v", err)
+            log.Printf("[WARN] URL Parsing: %v", err)
         }
         if parsedAURL.Fragment == "" {
             parsedAURL.Fragment, defaultFile = "IPlist", "IPlist"
@@ -40,7 +40,7 @@ func main() {
     if *rawTURL != "" {
         parsedTURL, err := golib.URLParse(*rawTURL)
         if err != nil {
-            log.Printf("[WARN] %v", err)
+            log.Printf("[WARN] URL Parsing: %v", err)
         }
         if defaultFile != "" {
             parsedTURL.Fragment = defaultFile
@@ -61,20 +61,20 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
             golib.IPRecordHandler(parsedURL.Fragment)(w, r)
         })
         if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
-            log.Fatalf("[ERRO] %v", err)
+            log.Fatalf("[ERRO] HTTP Service: %v", err)
         }
     case "https":
         authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
         tlsConfig, err := golib.TLSConfigApplication(parsedURL.Hostname)
         if err != nil {
-            log.Printf("[WARN] %v", err)
+            log.Printf("[WARN] Cert Application: %v", err)
             tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
             if err != nil {
-                log.Printf("[WARN] %v", err)
+                log.Printf("[WARN] Cert Generation: %v", err)
             }
         }
         if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, authHandler, tlsConfig); err != nil {
-            log.Fatalf("[ERRO] %v", err)
+            log.Fatalf("[ERRO] HTTPS Service: %v", err)
         }
     default:
         log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)
@@ -84,17 +84,17 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
 func handleTransmissions(parsedURL golib.ParsedURL) {
     localAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(parsedURL.Hostname, parsedURL.Port))
     if err != nil {
-        log.Printf("[WARN] %v", err)
+        log.Printf("[WARN] Addr Resolving: %v", err)
     }
     listener, err := net.ListenTCP("tcp", localAddr)
     if err != nil {
-        log.Fatalf("[ERRO] %v", err)
+        log.Fatalf("[ERRO] TCP Listening: %v", err)
     }
     defer listener.Close()
     for {
         localConn, err := listener.Accept()
         if err != nil {
-            log.Printf("[WARN] %v", err)
+            log.Printf("[WARN] Listener Denied: %v", err)
             continue
         }
         semTEMP <- struct{}{}
@@ -103,12 +103,12 @@ func handleTransmissions(parsedURL golib.ParsedURL) {
             defer func() { <-semTEMP }()
             clientIP := localConn.RemoteAddr().(*net.TCPAddr).IP.String()
             if parsedURL.Fragment != "" && !golib.IsInFile(clientIP, parsedURL.Fragment) {
-                log.Printf("[WARN] %v not in allowed IP list", clientIP)
+                log.Printf("[WARN] Access Denied: %v", clientIP)
                 return
             }
             remoteConn, err := net.Dial("tcp", strings.TrimPrefix(parsedURL.Path, "/"))
             if err != nil {
-                log.Printf("[WARN] %v", err)
+                log.Printf("[WARN] TCP Dialing: %v", err)
                 return
             }
             defer remoteConn.Close()

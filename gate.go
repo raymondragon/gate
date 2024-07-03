@@ -54,14 +54,14 @@ func main() {
 }
 
 func handleAuthorization(parsedURL golib.ParsedURL) {
-    authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-    if parsedURL.Path == "" || parsedURL.Path == "/" {
-        authHandler = nil
-    }
     http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
     })
+    authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
+    if parsedURL.Path == "" || parsedURL.Path == "/" {
+        authHandler = nil
+    }
     switch parsedURL.Scheme {
     case "http":
         if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, authHandler); err != nil {

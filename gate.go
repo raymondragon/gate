@@ -12,8 +12,8 @@ import (
 )
 
 var (
-    rawAURL = flag.String("A", "", "Authorization://user:pass@host:port/path#file")
-    rawTURL = flag.String("T", "", "Transmission://relay:port/target:port#file")
+    rawAURL = flag.String("A", "", "Authorization://:port/secret_path#file")
+    rawTURL = flag.String("T", "", "Transmissions://:port/target:port#file")
     semTEMP = make(chan struct{}, 1024)
 )
 
@@ -54,20 +54,17 @@ func main() {
 }
 
 func handleAuthorization(parsedURL golib.ParsedURL) {
-    http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
-        golib.IPDisplayHandler(w, r)
-        golib.IPRecordHandler(parsedURL.Fragment)(w, r)
-    })
-    authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-    if parsedURL.Path == "" || parsedURL.Path == "/" {
-        authHandler = nil
-    }
     switch parsedURL.Scheme {
     case "http":
-        if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, authHandler); err != nil {
+        http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
+            golib.IPDisplayHandler(w, r)
+            golib.IPRecordHandler(parsedURL.Fragment)(w, r)
+        })
+        if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
             log.Fatalf("[ERRO] %v", err)
         }
     case "https":
+        authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
         tlsConfig, err := golib.TLSConfigApplication(parsedURL.Hostname)
         if err != nil {
             log.Printf("[WARN] %v", err)

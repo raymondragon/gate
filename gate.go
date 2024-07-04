@@ -69,13 +69,9 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
         }
     case "https":
         authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
+        tlsConfig, err := golib.TLSConfigGeneration(parsedURL.Hostname)
         if err != nil {
-            log.Printf("[WARN] Cert Application: %v", err)
-            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
-            if err != nil {
-                log.Printf("[WARN] Cert Generation: %v", err)
-            }
+            log.Printf("[WARN] Cert Generation: %v", err)
         }
         if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, authHandler, tlsConfig); err != nil {
             log.Fatalf("[ERRO] HTTPS Service: %v", err)

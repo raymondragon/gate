@@ -58,40 +58,37 @@ func main() {
 }
 
 func handleAuthorization(parsedURL golib.ParsedURL) {
+    ipHandlerFunc := func(w http.ResponseWriter, r *http.Request) {
+        golib.IPDisplayHandler(w, r)
+        golib.IPRecordHandler(parsedURL.Fragment)(w, r)
+    }
+    setupTLS := func() (*tls.Config, error) {
+        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
+        if err != nil {
+            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
+        }
+        return tlsConfig, err
+    }
     switch parsedURL.Scheme {
     case "http":
-        http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
-            golib.IPDisplayHandler(w, r)
-            golib.IPRecordHandler(parsedURL.Fragment)(w, r)
-        })
+        http.HandleFunc(parsedURL.Path, ipHandlerFunc)
         if err := golib.ServeHTTP(parsedURL.Hostname, parsedURL.Port, nil); err != nil {
             log.Fatalf("[ERRO] HTTP Service: %v", err)
         }
     case "https":
-        http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
-            golib.IPDisplayHandler(w, r)
-            golib.IPRecordHandler(parsedURL.Fragment)(w, r)
-        })
-        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
+        http.HandleFunc(parsedURL.Path, ipHandlerFunc)
+        tlsConfig, err := setupTLS()
         if err != nil {
-            log.Printf("[WARN] Cert Application: %v", err)
-            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
-            if err != nil {
-                log.Printf("[WARN] Cert Generation: %v", err)
-            }
+            log.Printf("[WARN] TLS Setup: %v", err)
         }
         if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, tlsConfig); err != nil {
-            log.Fatalf("[ERRO] %v", err)
+            log.Fatalf("[ERRO] HTTPS Service: %v", err)
         }
     case "auto":
         autoHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
+        tlsConfig, err := setupTLS()
         if err != nil {
-            log.Printf("[WARN] Cert Application: %v", err)
-            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
-            if err != nil {
-                log.Printf("[WARN] Cert Generation: %v", err)
-            }
+            log.Printf("[WARN] TLS Setup: %v", err)
         }
         if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, autoHandler, tlsConfig); err != nil {
             log.Fatalf("[ERRO] HTTPS Service: %v", err)

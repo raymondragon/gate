@@ -34,7 +34,10 @@ func main() {
         } else {
             defaultFile = parsedAURL.Fragment
         }
-        log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawAURL, "#")[0], parsedAURL.Fragment)
+        if parsedAURL.Scheme != "https" {
+            log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawAURL, "#")[0], parsedAURL.Fragment)
+        } else {
+            log.Printf("[INFO] %v", strings.Split(*rawAURL, "#")[0])
         go handleAuthorization(parsedAURL)
     }
     if *rawTURL != "" {

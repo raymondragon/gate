@@ -34,7 +34,7 @@ func main() {
         } else {
             defaultFile = parsedAURL.Fragment
         }
-        if parsedAURL.Scheme != "https" {
+        if parsedAURL.Scheme != "auto" {
             log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawAURL, "#")[0], parsedAURL.Fragment)
         } else {
             log.Printf("[INFO] %v", strings.Split(*rawAURL, "#")[0])
@@ -68,12 +68,32 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
             log.Fatalf("[ERRO] HTTP Service: %v", err)
         }
     case "https":
-        authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-        tlsConfig, err := golib.TLSConfigGeneration(parsedURL.Hostname)
+        http.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
+            golib.IPDisplayHandler(w, r)
+            golib.IPRecordHandler(parsedURL.Fragment)(w, r)
+        })
+        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
         if err != nil {
-            log.Printf("[WARN] Cert Generation: %v", err)
+            log.Printf("[WARN] Cert Application: %v", err)
+            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
+            if err != nil {
+                log.Printf("[WARN] Cert Generation: %v", err)
+            }
         }
-        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, authHandler, tlsConfig); err != nil {
+        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, nil, tlsConfig); err != nil {
+            log.Fatalf("[ERRO] %v", err)
+        }
+    case "auto":
+        autoHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
+        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
+        if err != nil {
+            log.Printf("[WARN] Cert Application: %v", err)
+            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
+            if err != nil {
+                log.Printf("[WARN] Cert Generation: %v", err)
+            }
+        }
+        if err := golib.ServeHTTPS(parsedURL.Hostname, parsedURL.Port, autoHandler, tlsConfig); err != nil {
             log.Fatalf("[ERRO] HTTPS Service: %v", err)
         }
     default:

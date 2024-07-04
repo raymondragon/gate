@@ -1,6 +1,7 @@
 package main
 
 import (
+    "crypto/tls"
     "flag"
     "io"
     "log"

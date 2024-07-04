@@ -12,8 +12,8 @@ import (
 )
 
 var (
-    rawAURL = flag.String("A", "", "Authorization://:port/secret_path#file")
-    rawTURL = flag.String("T", "", "Transmissions://:port/target:port#file")
+    rawAURL = flag.String("A", "", "Authorization://host:port/secret_path#file")
+    rawTURL = flag.String("T", "", "Transmissions://host:port/target:port#file")
     semTEMP = make(chan struct{}, 1024)
 )
 
@@ -68,7 +68,7 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
         }
     case "https":
         authHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Hostname)
+        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
         if err != nil {
             log.Printf("[WARN] Cert Application: %v", err)
             tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)

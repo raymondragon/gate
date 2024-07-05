@@ -79,10 +79,6 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
         }
     case "auto":
         autoHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-        if parsedURL.Fragment != "" {
-            webdHandler := golib.WebdavHandler(parsedURL.Fragment, parsedURL.Path)
-            autoHandler = golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, webdHandler)
-        }
         tlsConfig, err := golib.TLSConfigSetup(parsedURL.Username, parsedURL.Hostname)
         if err != nil {
             log.Printf("[WARN] TLS Setup: %v", err)

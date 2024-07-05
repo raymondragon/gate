@@ -1,7 +1,6 @@
 package main
 
 import (
-    "crypto/tls"
     "flag"
     "io"
     "log"
@@ -63,13 +62,6 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
     }
-    setupTLS := func() (*tls.Config, error) {
-        tlsConfig, err := golib.TLSConfigApplication(parsedURL.Username, parsedURL.Hostname)
-        if err != nil {
-            tlsConfig, err = golib.TLSConfigGeneration(parsedURL.Hostname)
-        }
-        return tlsConfig, err
-    }
     switch parsedURL.Scheme {
     case "http":
         http.HandleFunc(parsedURL.Path, ipHandlerFunc)
@@ -78,7 +70,7 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
         }
     case "https":
         http.HandleFunc(parsedURL.Path, ipHandlerFunc)
-        tlsConfig, err := setupTLS()
+        tlsConfig, err := golib.TLSConfigSetup(parsedURL.Username, parsedURL.Hostname)
         if err != nil {
             log.Printf("[WARN] TLS Setup: %v", err)
         }
@@ -87,7 +79,11 @@ func handleAuthorization(parsedURL golib.ParsedURL) {
         }
     case "auto":
         autoHandler := golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, nil)
-        tlsConfig, err := setupTLS()
+        if parsedURL.Fragment != "" {
+            webdHandler := golib.WebdavHandler(parsedURL.Fragment, parsedURL.Path)
+            autoHandler = golib.ProxyHandler(parsedURL.Hostname, parsedURL.Username, parsedURL.Password, webdHandler)
+        }
+        tlsConfig, err := golib.TLSConfigSetup(parsedURL.Username, parsedURL.Hostname)
         if err != nil {
             log.Printf("[WARN] TLS Setup: %v", err)
         }

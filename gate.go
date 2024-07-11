@@ -58,7 +58,7 @@ func main() {
     select {}
 }
 
-func handleAuthorization(parsedURL url.URL) {
+func handleAuthorization(parsedURL *url.URL) {
     ipHandlerFunc := func(w http.ResponseWriter, r *http.Request) {
         golib.IPDisplayHandler(w, r)
         golib.IPRecordHandler(parsedURL.Fragment)(w, r)
@@ -71,7 +71,7 @@ func handleAuthorization(parsedURL url.URL) {
         }
     case "https":
         http.HandleFunc(parsedURL.Path, ipHandlerFunc)
-        tlsConfig, err := golib.TLSConfigSetup(parsedURL.Username(), parsedURL.Hostname())
+        tlsConfig, err := golib.TLSConfigSetup(parsedURL.User.Username(), parsedURL.Hostname())
         if err != nil {
             log.Printf("[WARN] TLS Setup: %v", err)
         }
@@ -83,7 +83,7 @@ func handleAuthorization(parsedURL url.URL) {
     }
 }
 
-func handleTransmissions(parsedURL url.URL) {
+func handleTransmissions(parsedURL *url.URL) {
     localAddr, err := net.ResolveTCPAddr("tcp", parsedURL.Host)
     if err != nil {
         log.Printf("[WARN] Addr Resolving: %v", err)

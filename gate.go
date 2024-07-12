@@ -35,7 +35,7 @@ func main() {
         } else {
             defaultFile = parsedAURL.Fragment
         }
-        if parsedAURL.User == "" {
+        if parsedAURL.User == nil {
             log.Printf("[INFO] %v <-> [FILE] %v", strings.Split(*rawAURL, "#")[0], parsedAURL.Fragment)
         } else {
             log.Printf("[INFO] %v", strings.Split(*rawAURL, "#")[0])

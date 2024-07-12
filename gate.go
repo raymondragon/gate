@@ -66,17 +66,24 @@ func handleAuthorization(parsedURL *url.URL) {
     switch parsedURL.Scheme {
     case "http":
         http.HandleFunc(parsedURL.Path, ipHandlerFunc)
-        if err := golib.ServeHTTP(parsedURL.Hostname(), parsedURL.Port(), nil); err != nil {
+        if err := golib.ServeHTTP(parsedURL.Host, nil); err != nil {
             log.Fatalf("[ERRO] HTTP Service: %v", err)
         }
     case "https":
-        http.HandleFunc(parsedURL.Path, ipHandlerFunc)
         tlsConfig, err := golib.TLSConfigSetup(parsedURL.User.Username(), parsedURL.Hostname())
         if err != nil {
             log.Printf("[WARN] TLS Setup: %v", err)
         }
-        if err := golib.ServeHTTPS(parsedURL.Hostname(), parsedURL.Port(), nil, tlsConfig); err != nil {
-            log.Fatalf("[ERRO] HTTPS Service: %v", err)
+        if passwd, hasPasswd := parsedLURL.User.Password(); !hasPasswd {
+            http.HandleFunc(parsedURL.Path, ipHandlerFunc)
+            if err := golib.ServeHTTPS(parsedURL.Host, nil, tlsConfig); err != nil {
+                log.Fatalf("[ERRO] HTTPS Service: %v", err)
+            }
+        } else {
+            passwdHandler := golib.ProxyHandler(parsedURL.Hostname(), passwd, nil)
+            if err := golib.ServeHTTPS(parsedURL.Host, passwdHandler, tlsConfig); err != nil {
+                log.Fatalf("[ERRO] HTTPS Service: %v", err)
+            }
         }
     default:
         log.Fatalf("[ERRO] Invalid Scheme: %v", parsedURL.Scheme)

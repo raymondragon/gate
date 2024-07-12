@@ -74,13 +74,13 @@ func handleAuthorization(parsedURL *url.URL) {
         if err != nil {
             log.Printf("[WARN] TLS Setup: %v", err)
         }
-        if passwd, hasPasswd := parsedLURL.User.Password(); !hasPasswd {
+        if passwd, hasPasswd := parsedURL.User.Password(); !hasPasswd {
             http.HandleFunc(parsedURL.Path, ipHandlerFunc)
             if err := golib.ServeHTTPS(parsedURL.Host, nil, tlsConfig); err != nil {
                 log.Fatalf("[ERRO] HTTPS Service: %v", err)
             }
         } else {
-            passwdHandler := golib.ProxyHandler(parsedURL.Hostname(), passwd, nil)
+            passwdHandler := golib.ProxyHandler(parsedURL.Hostname(), parsedURL.User.Username(), passwd, nil)
             if err := golib.ServeHTTPS(parsedURL.Host, passwdHandler, tlsConfig); err != nil {
                 log.Fatalf("[ERRO] HTTPS Service: %v", err)
             }

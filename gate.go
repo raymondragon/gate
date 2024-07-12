@@ -74,7 +74,7 @@ func handleAuthorization(parsedURL *url.URL) {
         if err != nil {
             log.Printf("[WARN] TLS Setup: %v", err)
         }
-        if passwd, hasPasswd := parsedURL.User.Password(); !hasPasswd {
+        if passwd, hasPasswd := parsedURL.User.Password(); !hasPasswd || parsedURL.User.Username() == "" {
             http.HandleFunc(parsedURL.Path, ipHandlerFunc)
             if err := golib.ServeHTTPS(parsedURL.Host, nil, tlsConfig); err != nil {
                 log.Fatalf("[ERRO] HTTPS Service: %v", err)

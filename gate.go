@@ -121,7 +121,7 @@ func handleTransmissions(parsedURL *url.URL) {
                 return
             }
             defer remoteConn.Close()
-            done := make(chan struct{})
+            done := make(chan struct{}, 2)
             go func() {
                 io.Copy(remoteConn, localConn)
                 done <- struct{}{}
@@ -130,6 +130,7 @@ func handleTransmissions(parsedURL *url.URL) {
                 io.Copy(localConn, remoteConn)
                 done <- struct{}{}
             }()
+            <-done
             <-done
         }(localConn)
     }
